@@ -7,7 +7,8 @@ import {
   MASTER_CODEWORD, 
   IMMUTABLE_BOUNDARY_PREFIXES,
   auditLedger,
-  AuditEntry
+  AuditEntry,
+  ObedienceResult
 } from './lib/governance'
 import { pluginRegistry } from './lib/plugins';
 import { authMigration } from './lib/migration';
@@ -87,7 +88,9 @@ function Sidebar({
   sessions,
   currentSessionId,
   setCurrentSessionId,
-  setMessages
+  setMessages,
+  toggleSidebar,
+  createNewSession
 }: {
   isMobile: boolean,
   isSidebarOpen: boolean,
@@ -97,16 +100,10 @@ function Sidebar({
   sessions: Map<string, Message[]>,
   currentSessionId: string,
   setCurrentSessionId: (id: string) => void,
-  setMessages: (msgs: Message[]) => void
+  setMessages: (msgs: Message[]) => void,
+  toggleSidebar: () => void,
+  createNewSession: () => void
 }) {
-  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
-
-  const createNewSession = () => {
-    const newId = `session-${Date.now()}`
-    setCurrentSessionId(newId)
-    setMessages([])
-  }
-
   return (
     <motion.aside 
       className={`sidebar ${isMobile ? 'mobile-drawer' : ''} ${isSidebarOpen ? 'is-open' : 'is-closed'}`}
@@ -214,6 +211,18 @@ export default function App() {
   const [formKey, setFormKey] = useState('')
   const [formProvider, setFormProvider] = useState('NVIDIA')
 
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen)
+
+  const createNewSession = () => {
+    const newId = `session-${Date.now()}`
+    const newSessions = new Map(sessions)
+    newSessions.set(newId, [])
+    setSessions(newSessions)
+    setCurrentSessionId(newId)
+    setMessages([])
+    if (isMobile) setIsSidebarOpen(false)
+  }
+
   const handleConnect = () => {
     setAgentConfig({
       name: formName,
@@ -254,6 +263,8 @@ export default function App() {
         currentSessionId={currentSessionId}
         setCurrentSessionId={setCurrentSessionId}
         setMessages={setMessages}
+        toggleSidebar={toggleSidebar}
+        createNewSession={createNewSession}
       />
 
       {/* ── Main Content Area ── */}

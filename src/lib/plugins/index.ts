@@ -146,7 +146,6 @@ import { singularityCore } from './core/singularity-core';
 import { rccrBrain } from './core/rccr-brain';
 import { perceptionEngine } from './vision/perception-engine';
 import { ghostMesh } from './network/ghost-mesh';
-import { ventureMaster } from './finance/venture-master';
 import { hudRenderer } from './spatial/hud-renderer';
 import { OverclockPlugin } from './system/overclock/service';
 import { ChronosPlugin } from './system/chronos/service';
@@ -327,6 +326,7 @@ export class PluginRegistry {
 
     // Industrial Tier
     this.register(forgeProtocol);
+    this.register(gaiaXProtocol);
     
     // Cosmic Tier
     this.register(pioneerScan);
@@ -347,7 +347,6 @@ export class PluginRegistry {
     this.register(rccrBrain);
     this.register(perceptionEngine);
     this.register(ghostMesh);
-    this.register(ventureMaster);
     this.register(hudRenderer);
     this.register(ascensionCommandEngine);
     this.register(aetherLinkPlugin);

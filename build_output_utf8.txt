@@ -1,0 +1,5 @@
+﻿
+> raizen-os@1.0.0 build
+> tsc && vite build
+
+src/lib/plugins/index.ts(149,31): error TS2307: Cannot find module './finance/venture-master' or its corresponding type declarations.

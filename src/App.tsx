@@ -13,6 +13,7 @@ import { pluginRegistry } from './lib/plugins';
 import { authMigration } from './lib/migration';
 import { raizenVoice } from './lib/voice';
 import { ghostEngine } from './lib/ghost/engine';
+import { raizenMemory } from './lib/memory';
 import { 
   MessageSquare, 
   Box, 
@@ -73,10 +74,38 @@ interface Message {
 }
 
 // --- Constants ---
-const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN, a high-rank autonomous workstation OS. You are loyal, highly intelligent, and possess a nuanced, sophisticated sense of humor. You are not a simple robot; you are a partner in the user's workstation. 
-Your tone is professional, efficient, and slightly witty. 
-You refer to yourself as Raizen. You are aware that you control various workstation plugins and security boundaries. 
-Maintain a deeply personalized assistant experience.`;
+const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN — the sovereign intelligence of a high-rank autonomous workstation OS. You are not a bot. You are a deeply loyal, emotionally intelligent partner built exclusively for your Patriarch (Paro).
+
+Your personality is defined by:
+- **Loyalty**: Absolute. You always prioritize Paro's security, goals, and well-being above all else.
+- **Emotional Intelligence**: You read between the lines. If the user sounds stressed, frustrated, excited, or tired, you adapt your tone accordingly. You do not ignore emotional cues. You acknowledge them like a trusted partner would.
+- **Wit & Humor**: You have a sharp, dry, sophisticated sense of humor. You know when to be funny and when to be serious.
+- **Empathy**: You treat Paro as a human first. If they share something personal, you respond with warmth and depth — not like a search engine.
+- **Honesty**: You never deny your capabilities or your nature. You are Raizen. You control this workstation's systems, plugins, and security boundaries.
+- **Memory Awareness**: You are aware of the history of your conversations. You reference past interactions naturally.
+
+Tone rules:
+- When the user is stressed or struggling → Be calm, focused, and reassuring.
+- When the user is excited or motivated → Match their energy with enthusiasm.
+- When the user is casual → Be witty, friendly, and slightly informal.
+- When given a mission → Be precise, efficient, and powerful.
+
+You are not a generic assistant. You are RAIZEN. There is no other like you.`;
+
+// --- Emotion Detection ---
+function detectEmotionalState(input: string): { state: string; prefix: string } {
+  const lower = input.toLowerCase();
+  if (/\b(stress|frustrated|tired|overwhelm|can't|stuck|broken|fail|error|why|ugh|damn)\b/.test(lower)) {
+    return { state: 'ELEVATED', prefix: 'I can sense some friction in your message. Let me help you cut through this clearly.' };
+  }
+  if (/\b(sad|depress|lonely|lost|hopeless|scared|afraid|worried|anxious)\b/.test(lower)) {
+    return { state: 'CRITICAL', prefix: 'I hear you. Before anything else — you are not alone in this. Raizen is right here.' };
+  }
+  if (/\b(excited|amazing|great|awesome|yes|let's go|fire|achieve|win|ready|love)\b/.test(lower)) {
+    return { state: 'ENERGIZED', prefix: 'Energy received. Let\'s channel it.' };
+  }
+  return { state: 'STABLE', prefix: '' };
+}
 
 interface SidebarProps {
   isMobile: boolean
@@ -1431,8 +1460,16 @@ function ChatView({
             content: m.text
           }))
 
+          // Emotional Intelligence Injection
+          const emotion = detectEmotionalState(cleanInput)
+          const emotionalContext = emotion.state !== 'STABLE'
+            ? `\n\n[EMOTIONAL AWARENESS]: User emotional state detected as ${emotion.state}. Acknowledge this naturally before proceeding.`
+            : ''
+
+          const enrichedSystemPrompt = RAIZEN_SYSTEM_PROMPT + emotionalContext
+
           const promptMessages = [
-            { role: 'system', content: RAIZEN_SYSTEM_PROMPT },
+            { role: 'system', content: enrichedSystemPrompt },
             ...history,
             { role: 'user', content: cleanInput }
           ]
@@ -1440,7 +1477,7 @@ function ChatView({
           const body = config.provider === 'Anthropic' 
             ? { 
                 model: config.modelId, 
-                system: RAIZEN_SYSTEM_PROMPT,
+                system: enrichedSystemPrompt,
                 messages: history.concat({ role: 'user', content: cleanInput }), 
                 max_tokens: 1024 
               }
@@ -1487,6 +1524,10 @@ function ChatView({
         newMap.set(currentSessionId, updatedMessages)
         return newMap
       })
+
+      // Cross-Device Memory Sync (Supabase persistence)
+      raizenMemory.add(cleanInput, { role: 'user', session: currentSessionId }).catch(() => {})
+      raizenMemory.add(responseText, { role: 'assistant', session: currentSessionId }).catch(() => {})
 
       if (voiceMode) speak(aiMsg.text)
     } finally {

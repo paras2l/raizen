@@ -6,7 +6,7 @@ import { PvRecorder } from '@picovoice/pvrecorder-node'
 import { discoveryService } from '../src/lib/network/bonjour'
 import { tailscaleManager } from '../src/lib/network/tailscale'
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const _dirname = path.dirname(fileURLToPath(import.meta.url))
 
 // The built directory structure
 //
@@ -17,7 +17,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // │ │ ├── main.js
 // │ │ └── preload.mjs
 // │
-process.env.APP_ROOT = path.join(__dirname, '..')
+process.env.APP_ROOT = path.join(_dirname, '..')
 
 let win: BrowserWindow | null = null
 let tray: Tray | null = null
@@ -47,7 +47,7 @@ function createTray() {
 }
 
 function createWindow() {
-  const appRoot = process.env.APP_ROOT || path.join(__dirname, '..')
+  const appRoot = process.env.APP_ROOT || path.join(_dirname, '..')
   const vitePublic = process.env.VITE_PUBLIC || path.join(appRoot, 'public')
 
   win = new BrowserWindow({
@@ -55,7 +55,7 @@ function createWindow() {
     height: 900,
     icon: path.join(vitePublic, 'favicon.ico'),
     webPreferences: {
-      preload: path.join(__dirname, 'preload.mjs'),
+      preload: path.join(_dirname, 'preload.mjs'),
       webviewTag: true,
       nodeIntegration: false,
       contextIsolation: true,

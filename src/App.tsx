@@ -66,8 +66,35 @@ interface AgentConfig {
 interface Message {
   id: string
   text: string
-  sender: 'user' | 'ai'
+  sender: 'user' | 'assistant'
   timestamp: Date
+}
+
+interface SidebarProps {
+  isMobile: boolean
+  isSidebarOpen: boolean
+  setIsSidebarOpen: React.Dispatch<React.SetStateAction<boolean>>
+  activeTab: TabId
+  setActiveTab: React.Dispatch<React.SetStateAction<TabId>>
+  sessions: Map<string, Message[]>
+  currentSessionId: string
+  setCurrentSessionId: React.Dispatch<React.SetStateAction<string>>
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
+  toggleSidebar: () => void
+  createNewSession: () => void
+}
+
+interface ChatViewProps {
+  config: AgentConfig | null
+  voiceMode: boolean
+  securityError: string | null
+  setSecurityError: React.Dispatch<React.SetStateAction<string | null>>
+  currentSessionId: string
+  setCurrentSessionId: React.Dispatch<React.SetStateAction<string>>
+  sessions: Map<string, Message[]>
+  setSessions: React.Dispatch<React.SetStateAction<Map<string, Message[]>>>
+  messages: Message[]
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
 }
 
 const tabs: Tab[] = [
@@ -91,19 +118,7 @@ function Sidebar({
   setMessages,
   toggleSidebar,
   createNewSession
-}: {
-  isMobile: boolean,
-  isSidebarOpen: boolean,
-  setIsSidebarOpen: (o: boolean) => void,
-  activeTab: string,
-  setActiveTab: (t: TabId) => void,
-  sessions: Map<string, Message[]>,
-  currentSessionId: string,
-  setCurrentSessionId: (id: string) => void,
-  setMessages: (msgs: Message[]) => void,
-  toggleSidebar: () => void,
-  createNewSession: () => void
-}) {
+}: SidebarProps) {
   return (
     <motion.aside 
       className={`sidebar ${isMobile ? 'mobile-drawer' : ''} ${isSidebarOpen ? 'is-open' : 'is-closed'}`}
@@ -128,7 +143,12 @@ function Sidebar({
           )}
         </div>
         {isMobile && (
-          <button className="close-drawer" onClick={() => setIsSidebarOpen(false)}>
+          <button 
+            className="close-drawer" 
+            onClick={() => setIsSidebarOpen(false)}
+            aria-label="Close sidebar"
+            title="Close sidebar"
+          >
             <X size={20} />
           </button>
         )}
@@ -161,7 +181,12 @@ function Sidebar({
           <div className="sidebar-sessions">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
               <div className="session-divider">SESSIONS</div>
-              <button className="new-session-btn" onClick={createNewSession}>
+              <button 
+                className="new-session-btn" 
+                onClick={createNewSession}
+                aria-label="New session"
+                title="New session"
+              >
                 <Plus size={12} />
               </button>
             </div>
@@ -184,7 +209,12 @@ function Sidebar({
 
       {!isMobile && (
         <div className="sidebar-footer">
-          <button className="collapse-toggle" onClick={toggleSidebar}>
+          <button 
+            className="collapse-toggle" 
+            onClick={toggleSidebar}
+            aria-label={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+            title={isSidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+          >
             <ChevronRight size={16} className={isSidebarOpen ? 'rotate-180' : ''} />
           </button>
         </div>
@@ -273,7 +303,12 @@ export default function App() {
         <header className="viewport-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
             {isMobile && (
-              <button className="burger-btn" onClick={() => setIsSidebarOpen(true)}>
+              <button 
+                className="burger-btn" 
+                onClick={() => setIsSidebarOpen(true)}
+                aria-label="Open sidebar"
+                title="Open sidebar"
+              >
                 <MenuIcon size={20} />
               </button>
             )}
@@ -288,6 +323,7 @@ export default function App() {
               className={`voice-toggle ${voiceMode ? 'active' : ''} ${isMobile ? 'mini' : ''}`}
               onClick={() => setVoiceMode(!voiceMode)}
               title={voiceMode ? 'Disable Voice Mode' : 'Enable Voice Mode'}
+              aria-label={voiceMode ? 'Disable Voice Mode' : 'Enable Voice Mode'}
             >
               {voiceMode ? <Volume2 size={16} /> : <VolumeX size={16} />}
               {!isMobile && <span>{voiceMode ? 'VOICE ON' : 'VOICE OFF'}</span>}
@@ -357,7 +393,12 @@ export default function App() {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
             >
-              <button className="modal-close" onClick={() => setIsModalOpen(false)}>
+              <button 
+                className="modal-close" 
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Close modal"
+                title="Close modal"
+              >
                 <X size={20} />
               </button>
               
@@ -368,8 +409,12 @@ export default function App() {
 
               <div className="modal-body">
                 <div className="form-group">
-                  <label><Cpu size={14} /> Provider</label>
-                  <select value={formProvider} onChange={e => setFormProvider(e.target.value)}>
+                  <label htmlFor="provider-select"><Cpu size={14} /> Provider</label>
+                  <select 
+                    id="provider-select"
+                    value={formProvider} 
+                    onChange={e => setFormProvider(e.target.value)}
+                  >
                     <option>NVIDIA</option>
                     <option>OpenAI</option>
                     <option>Anthropic</option>
@@ -387,18 +432,35 @@ export default function App() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label><Database size={14} /> Model ID</label>
-                    <input type="text" value={formModel} onChange={e => setFormModel(e.target.value)} placeholder="e.g. meta/llama-3" />
+                    <label htmlFor="model-id-input"><Database size={14} /> Model ID</label>
+                    <input 
+                      id="model-id-input"
+                      type="text" 
+                      value={formModel} 
+                      onChange={e => setFormModel(e.target.value)} 
+                      placeholder="e.g. meta/llama-3" 
+                    />
                   </div>
                   <div className="form-group">
-                    <label><Box size={14} /> Name</label>
-                    <input type="text" value={formName} onChange={e => setFormName(e.target.value)} />
+                    <label htmlFor="agent-name-input"><Box size={14} /> Name</label>
+                    <input 
+                      id="agent-name-input"
+                      type="text" 
+                      value={formName} 
+                      onChange={e => setFormName(e.target.value)} 
+                    />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label><Key size={14} /> API Key</label>
-                  <input type="password" value={formKey} onChange={e => setFormKey(e.target.value)} placeholder="••••••••••••••••" />
+                  <label htmlFor="api-key-input"><Key size={14} /> API Key</label>
+                  <input 
+                    id="api-key-input"
+                    type="password" 
+                    value={formKey} 
+                    onChange={e => setFormKey(e.target.value)} 
+                    placeholder="••••••••••••••••" 
+                  />
                 </div>
               </div>
 
@@ -941,18 +1003,7 @@ function ChatView({
   setSessions,
   messages,
   setMessages
-}: { 
-  config: AgentConfig | null, 
-  voiceMode: boolean, 
-  securityError: string | null, 
-  setSecurityError: React.Dispatch<React.SetStateAction<string | null>>,
-  currentSessionId: string,
-  setCurrentSessionId: (id: string) => void,
-  sessions: Map<string, Message[]>,
-  setSessions: React.Dispatch<React.SetStateAction<Map<string, Message[]>>>,
-  messages: Message[],
-  setMessages: React.Dispatch<React.SetStateAction<Message[]>>
-}) {
+}: ChatViewProps) {
   const [inputValue, setInputValue] = useState('')
   const [isListening, setIsListening] = useState(false)
   const chatEndRef = useRef<HTMLDivElement>(null)
@@ -1091,7 +1142,7 @@ function ChatView({
       const aiMsg: Message = { 
         id: (Date.now() + 1).toString(), 
         text: responseText, 
-        sender: 'ai', 
+        sender: 'assistant', 
         timestamp: new Date() 
       }
       
@@ -1166,17 +1217,27 @@ function ChatView({
           onKeyDown={e => e.key === 'Enter' && handleSend()}
           placeholder={config ? "Message Raizen..." : "Please connect an agent to begin..."} 
           disabled={!config} 
+          aria-label="Chat input"
+          title="Chat input"
         />
         {voiceMode && (
           <button 
             className={`mic-btn ${isListening ? 'listening' : ''}`}
             onClick={startListening}
             disabled={!config}
+            aria-label={isListening ? 'Stop listening' : 'Start listening'}
+            title={isListening ? 'Stop listening' : 'Start listening'}
           >
             {isListening ? <Mic size={18} /> : <MicOff size={18} />}
           </button>
         )}
-        <button className="send-btn" onClick={() => handleSend()} disabled={!config}>
+        <button 
+          className="send-btn" 
+          onClick={() => handleSend()} 
+          disabled={!config}
+          aria-label="Send message"
+          title="Send message"
+        >
           <MessageSquare size={18} />
         </button>
       </div>
@@ -1256,7 +1317,12 @@ function MissionCenterView() {
           </motion.div>
         ))}
         
-        <button className="card" style={{ borderStyle: 'dashed', background: 'transparent', minHeight: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', cursor: 'pointer' }}>
+        <button 
+          className="card" 
+          style={{ borderStyle: 'dashed', background: 'transparent', minHeight: '200px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '1rem', cursor: 'pointer' }}
+          aria-label="Register new extension"
+          title="Register new extension"
+        >
           <div className="card-icon-box" style={{ background: 'var(--panel-soft)' }}>
             <Plus size={24} />
           </div>

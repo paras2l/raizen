@@ -6,7 +6,8 @@ import {
   ADMIN_CODEWORD, 
   MASTER_CODEWORD, 
   IMMUTABLE_BOUNDARY_PREFIXES,
-  auditLedger 
+  auditLedger,
+  AuditEntry
 } from './lib/governance'
 import { pluginRegistry } from './lib/plugins';
 import { authMigration } from './lib/migration';
@@ -1256,7 +1257,7 @@ function MissionCenterView() {
 }
 
 function ActivityLedgerView() {
-  const [logs, setLogs] = useState<any[]>([])
+  const [logs, setLogs] = useState<AuditEntry[]>([])
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -1276,9 +1277,9 @@ function ActivityLedgerView() {
           logs.map(log => (
             <div key={log.id} className="log-item">
               <Clock size={16} className="opacity-40" />
-              <span className="log-time">{new Date(log.timestamp).toLocaleTimeString()}</span>
+              <span className="log-time">{new Date(log.created_at).toLocaleTimeString()}</span>
               <div className="log-content">
-                <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--accent-primary)', marginBottom: 4 }}>{log.type.toUpperCase()}</div>
+                <div style={{ fontWeight: 700, fontSize: '0.7rem', color: 'var(--accent-primary)', marginBottom: 4 }}>{log.action.toUpperCase()}</div>
                 <div style={{ wordBreak: 'break-all' }}>{JSON.stringify(log.payload)}</div>
                 <div className="log-hash" style={{ fontSize: '0.6rem', opacity: 0.4, marginTop: 4, fontFamily: 'monospace' }}>UUID: {log.id}</div>
               </div>

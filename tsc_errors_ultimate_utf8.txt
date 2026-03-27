@@ -1,0 +1,8 @@
+﻿[96msrc/lib/plugins/index.ts[0m:[93m149[0m:[93m31[0m - [91merror[0m[90m TS2307: [0mCannot find module './finance/venture-master' or its corresponding type declarations.
+
+[7m149[0m import { ventureMaster } from './finance/venture-master';
+[7m   [0m [91m                              ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+
+
+Found 1 error in src/lib/plugins/index.ts[90m:149[0m
+

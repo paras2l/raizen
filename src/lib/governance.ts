@@ -5,8 +5,8 @@
 import { supabase } from './supabase';
 
 // --- Constants & Config ---
-export const ADMIN_CODEWORD = 'paro the chief';
-export const MASTER_CODEWORD = 'paro the master';
+export const ADMIN_CODEWORD = import.meta.env.VITE_ADMIN_CODEWORD || 'paro the chief';
+export const MASTER_CODEWORD = import.meta.env.VITE_MASTER_CODEWORD || 'paro the master';
 export const IMMUTABLE_BOUNDARY_PREFIXES = ['/boundary', '/src/lib/governance'];
 export const SENSITIVE_CATEGORIES = new Set(['filesystem', 'network', 'codegen', 'system', 'knowledge']);
 
@@ -59,13 +59,18 @@ export interface EnforcementContext {
 
 export type AuditEventType = 'policy_check' | 'approval_issue' | 'approval_use' | 'action_result' | 'focus_event' | 'focus_warning' | 'biometric_event' | 'stress_alert' | 'insight_capture' | 'idea_archived' | 'dream_incubation' | 'briefing_ready' | 'intent_prediction' | 'workflow_optimized' | 'aura_state_shift' | 'bio_identity_sync' | 'emotional_sync_event' | 'decision_pacing_applied' | 'thought_stream_active' | 'neural_code_generated' | 'thought_synthesis_start' | 'code_injected_neural' | 'memory_recall_request' | 'context_reconstructed' | 'dream_learning_scheduled' | 'retention_recorded' | 'tactical_alert_issued' | 'hazard_identified' | 'knowledge_archived' | 'backup_sync_complete';
 
+export interface ObedienceResult {
+  allowed: boolean;
+  cleanText: string;
+  reason?: string;
+}
+
 export interface AuditEntry {
   id: string;
-  timestamp: string;
-  type: AuditEventType;
+  user_id: string;
+  action: AuditEventType;
   payload: Record<string, any>;
-  prevHash: string;
-  hash: string;
+  created_at: string;
 }
 
 // --- Utilities ---
@@ -171,7 +176,7 @@ export function cleanCodeword(text: string): string {
 /**
  * Integrated validation for chat messages.
  */
-export function checkCodewordObedience(text: string) {
+export function checkCodewordObedience(text: string): ObedienceResult {
   const lowerText = text.toLowerCase();
   
   // 1. Harmful Pattern Check

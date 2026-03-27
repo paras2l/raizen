@@ -278,7 +278,6 @@ export class PluginRegistry {
 
     // System & World Tier
     this.register(sentientCode);
-    this.register(alphaEvolution);
     this.register(immuneSystem);
     this.register(lifeLineProtocol);
     this.register(passportProtocol);
@@ -309,8 +308,6 @@ export class PluginRegistry {
     this.register(hyperionProtocol);
     this.register(teslaProtocol);
     this.register(aegisShieldProtocol);
-    this.register(parallelEngine);
-    this.register(gaiaXProtocol);
     this.register(gridProtocol);
     this.register(spatialHooks);
 
@@ -330,7 +327,6 @@ export class PluginRegistry {
 
     // Industrial Tier
     this.register(forgeProtocol);
-    this.register(gaiaXProtocol);
     
     // Cosmic Tier
     this.register(pioneerScan);

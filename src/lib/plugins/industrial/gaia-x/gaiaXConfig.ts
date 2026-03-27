@@ -1,0 +1,18 @@
+export const GaiaXConfig = {
+  VERSION: '1.0.0-GOD-MODE',
+  OPTIMIZATION_PRIORITY: 'ULTRA_GOD_PRO_MAX',
+  DASHBOARD_REFRESH_MS: 500,
+  
+  O2_SAFE_RANGE: { MIN: 19.5, MAX: 23.5 },
+  TEMP_SAFE_RANGE: { MIN: 18, MAX: 26 },
+  
+  CLIMATE: {
+    RESPONSE_LATENCY_MS: 1000,
+    PRECcision_DELTA: 0.1
+  },
+  
+  LIGHTING: {
+    CIRCADIAN_SYNC_ENABLED: true,
+    MAX_LUX: 10000
+  }
+};

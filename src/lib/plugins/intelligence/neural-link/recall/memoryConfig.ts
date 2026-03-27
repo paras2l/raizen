@@ -1,0 +1,14 @@
+export const MemoryRecallConfig = {
+  SEARCH: {
+    FUZZY_THRESHOLD: 0.6,
+    MAX_MATCHES: 5,
+    RECONSTRUCTION_WINDOW_MS: 3600000 // 1 hour
+  },
+  INDEXING: {
+    PERSISTENCE_ENABLED: true,
+    MAX_ENTRIES: 10000
+  },
+  ANALYSIS: {
+    MIN_ASSOCIATION_STRENGTH: 0.3
+  }
+};

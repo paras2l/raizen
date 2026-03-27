@@ -1,0 +1,18 @@
+export const GaiaConfig = {
+  THRESHOLDS: {
+    MOISTURE_MIN: 30, // Percentage
+    MOISTURE_MAX: 75,
+    PH_OPTIMAL: 6.5,
+    PH_TOLERANCE: 0.5
+  },
+  NUTRIENTS: {
+    MIX_RATIO_NITROGEN: 0.1,
+    MIX_RATIO_PHOSPHORUS: 0.05,
+    MIX_RATIO_POTASSIUM: 0.08
+  },
+  SENSORS: {
+    SCAN_INTERVAL: 600000, // 10 minutes
+    WEATHER_REFRESH: 3600000 // 1 hour
+  },
+  GAIA_VERSION: '2.2.2-GAIA-PRO'
+};

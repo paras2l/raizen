@@ -1,0 +1,15 @@
+export const SynapseConfig = {
+  PREDICTION: {
+    MIN_CONFIDENCE: 0.75,
+    SIGNAL_WINDOW_MS: 5000,
+    MAX_PREDICTIONS_PER_SEC: 2
+  },
+  PRELOAD: {
+    MAX_CONCURRENT_FILES: 5,
+    UI_HIGHLIGHT_OPACITY: 0.3,
+    CAPPING_MB: 50
+  },
+  GOVERNANCE: {
+    AUDIT_SENSITIVE_INTENTS: true
+  }
+};

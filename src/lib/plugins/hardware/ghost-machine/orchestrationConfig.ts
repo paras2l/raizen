@@ -1,0 +1,6 @@
+export const OrchestrationConfig = {
+  GHOST_SYNC_INTERVAL: 100,
+  MAX_TASK_RECURSION: 10,
+  FAILOVER_THRESHOLD: 0.8,
+  RADIUS: 500
+};

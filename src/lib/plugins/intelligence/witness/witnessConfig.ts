@@ -1,0 +1,7 @@
+export const WitnessConfig = {
+  VERSION: '1.0.0-BLACKBOX',
+  CAPTURE_FIDELITY: 'MAX_HOLO',
+  REDUNDANT_STORAGE: 2,
+  BUFFER_SIZE_MB: 2048,
+  SYNC_INTERVAL_MS: 1000 // Real-time
+};

@@ -1,0 +1,7 @@
+export const PreservationConfig = {
+  VERSION: '1.0.0-ETERNAL-ORBIT',
+  UPLOAD_FREQUENCY_MS: 86400000, // Daily orbital sync
+  COSMIC_REDUNDANCY: 3,
+  RETENTION_CENTURIES: 5,
+  UPLINK_ENCRYPTION: 'QUANTUM_PROOF_V2'
+};

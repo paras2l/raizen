@@ -1,0 +1,11 @@
+export const BackupConfig = {
+  STRATEGY: {
+    CONTINUOUS_INTERVAL_MS: 300000, // 5 mins
+    REDUNDANCY_POINTS: 3,
+    COMPRESSION: 'ULTRA'
+  },
+  STORAGE: {
+    LOCAL_QUOTA_GB: 50,
+    REDISTRIBUTION_ENABLED: true
+  }
+};

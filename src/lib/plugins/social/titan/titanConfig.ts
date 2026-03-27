@@ -1,0 +1,7 @@
+export const TitanConfig = {
+  VERSION: '1.0.0-TITAN',
+  DOMAINS: ['HEALTH', 'TECH', 'SCIENCE'],
+  RESONANCE_THRESHOLD: 0.8,
+  DISCOVERY_LIMIT: 50,
+  SCAN_INTERVAL_MS: 3600000 // 1 hour
+};

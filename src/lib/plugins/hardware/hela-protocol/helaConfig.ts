@@ -1,0 +1,14 @@
+export const HelaConfig = {
+  VERSION: '1.0.0-GOD-MODE',
+  REPAIR_MODE: 'ULTRA_GOD_PRO_MAX',
+  DASHBOARD_REFRESH_MS: 500,
+  
+  THRESHOLDS: {
+    REPAIR_TRIGGER: 0.8, // 80% health
+    CRITICAL_REPAIR: 0.5,
+    AUTONOMOUS_DEPLOYMENT: true
+  },
+  
+  CATALYST_SYNC_ENABLED: true,
+  STEALTH_MODE: true
+};

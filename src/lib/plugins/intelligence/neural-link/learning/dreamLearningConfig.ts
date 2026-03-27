@@ -1,0 +1,14 @@
+export const DreamLearningConfig = {
+  SLEEP: {
+    INACTIVITY_THRESHOLD_MS: 1800000, // 30 mins
+    TYPICAL_WAKE_HOUR: 7
+  },
+  REINFORCEMENT: {
+    PRE_SLEEP_WINDOW_MINS: 30,
+    POST_SLEEP_WINDOW_MINS: 15,
+    SUMMARY_ITEM_LIMIT: 5
+  },
+  PERSISTENCE: {
+    HISTORY_LIMIT: 50
+  }
+};

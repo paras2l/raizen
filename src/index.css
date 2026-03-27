@@ -1,0 +1,77 @@
+:root {
+  /* ── Raizen / Jarvis Cafe Aesthetic ── */
+  --bg-void: #fdfaf6;
+  --bg-deep: #faf3e0;
+  --panel: rgba(250, 243, 224, 0.8);
+  --panel-soft: rgba(253, 250, 246, 0.6);
+  --edge: #e0d5c1;
+  --edge-soft: rgba(224, 213, 193, 0.5);
+  --edge-glow: #6f4e37;
+  --ink-main: #3e2723;
+  --ink-muted: #a68d7a;
+  --ink-light: #5d4037;
+  --accent-primary: #6f4e37; /* Cafe Brown */
+  --accent-secondary: #ff7043;
+  --accent-red: #ef4444;
+  --accent-success: #4e342e;
+  --accent-danger: #d32f2f;
+  
+  --glass-blur: blur(20px);
+  --glass-border: 1px solid rgba(0, 0, 0, 0.08);
+  --glow-shadow: 0 8px 32px rgba(0, 0, 0, 0.04);
+}
+
+/* ── Legacy TTY Fallback ── */
+.legacy-tty {
+  --glass-border: 1px solid #333;
+  --glass-blur: none;
+  --glow-shadow: none;
+}
+
+.legacy-tty .card, 
+.legacy-tty .sidebar, 
+.legacy-tty .nav-item.is-active {
+  border: 1px solid white !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.legacy-tty .progress-fill {
+  background: white !important;
+}
+
+/* ── Base Reset ── */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Outfit', 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-void);
+  color: var(--ink-main);
+  line-height: 1.6;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#root {
+  height: 100vh;
+  display: flex;
+}
+
+/* ── Scrollbars ── */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--edge-soft);
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-muted);
+}

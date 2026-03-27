@@ -1,0 +1,14 @@
+export const ForgeConfig = {
+  PROTOCOLS: {
+    FABRICATION: 'G_CODE',
+    COMMAND: 'MQTT',
+    MONITORING: 'STREAM_V3'
+  },
+  THRESHOLDS: {
+    INVENTORY_LOW: 15, // Percentage
+    ERROR_RETRY_MAX: 3,
+    MAX_CONCURRENT_JOBS: 12
+  },
+  ORCHESTRATION_INTERVAL: 5000, // 5 seconds
+  FORGE_VERSION: '5.5.5-FORGE-PRO'
+};

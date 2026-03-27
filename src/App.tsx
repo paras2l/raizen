@@ -1445,7 +1445,9 @@ function ChatView({
             'Anthropic': 'https://api.anthropic.com/v1/messages',
             'DeepSeek': 'https://api.deepseek.com/chat/completions',
             'Groq': 'https://api.groq.com/openai/v1/chat/completions',
-            'OpenRouter': 'https://openrouter.ai/api/v1/chat/completions'
+            'OpenRouter': 'https://openrouter.ai/api/v1/chat/completions',
+            'Gemini': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions',
+            'Google (Gemini)': 'https://generativelanguage.googleapis.com/v1beta/openai/chat/completions'
           }
 
           const endpoint = apiMap[config.provider] || apiMap['OpenAI']

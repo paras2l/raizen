@@ -1476,6 +1476,8 @@ function ChatView({
             { role: 'user', content: cleanInput }
           ]
 
+          const isNvidiaNemotron = config.provider === 'NVIDIA' && config.modelId.toLowerCase().includes('nemotron')
+
           const body = config.provider === 'Anthropic' 
             ? { 
                 model: config.modelId, 
@@ -1485,7 +1487,13 @@ function ChatView({
               }
             : { 
                 model: config.modelId, 
-                messages: promptMessages
+                messages: promptMessages,
+                ...(isNvidiaNemotron && {
+                  extra_body: {
+                    chat_template_kwargs: { enable_thinking: true },
+                    reasoning_budget: 16384
+                  }
+                })
               }
 
           const response = await fetch(endpoint, {
@@ -1502,9 +1510,12 @@ function ChatView({
             : data.choices[0].message.content
         } catch (e: any) {
           console.error('[NEURAL LINK ERROR]', e)
-          const errorMsg = e.message.includes('401') 
-            ? "Unauthorized. Please verify your API Key in the 'Connect Agent' settings."
-            : e.message
+          let errorMsg = e.message
+          if (e.message.includes('401')) {
+            errorMsg = "Unauthorized. Please verify your API Key in the 'Connect Agent' settings."
+          } else if (e.message.includes('429')) {
+            errorMsg = "Rate limit exceeded. Please wait a moment or check your API quota."
+          }
           responseText = `⚠️ Neural Link Interrupted: ${errorMsg}. Falling back to high-sovereignty mode.`
         }
       } else {

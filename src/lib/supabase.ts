@@ -1,7 +1,14 @@
 import { createClient } from '@supabase/supabase-js';
 
 // The Singularity OS requires persistent, high-availability memory clusters.
-const supabaseUrl = 'https://clcyjlonejqtluadlwgm.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNsY3lqbG9uZWpxdGx1YWRsd2dtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwOTE3NDUsImV4cCI6MjA4OTY2Nzc0NX0.47Bw4WxJpoGAO2slS9DxrYivHa63Ar9sBuh-WHtsrY0';
+const supabaseUrl = (import.meta as any).env.VITE_SUPABASE_URL;
+const supabaseKey = (import.meta as any).env.VITE_SUPABASE_ANON_KEY;
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+if (!supabaseUrl || !supabaseKey) {
+  console.warn('[SUPABASE] Missing production credentials in .env. Falling back to Genesis defaults.');
+}
+
+export const supabase = createClient(
+  supabaseUrl || 'https://(YOUR_PROJECT).supabase.co', 
+  supabaseKey || '(YOUR_ANON_KEY)'
+);

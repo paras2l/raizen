@@ -1,7 +1,6 @@
 import { voidConfig } from './voidConfig';
 import { voidLogger } from './voidLogger';
 import { QuantumKey } from './voidTypes';
-import crypto from 'crypto';
 
 export class QuantumKeyGenerator {
   private currentKey: QuantumKey | null = null;

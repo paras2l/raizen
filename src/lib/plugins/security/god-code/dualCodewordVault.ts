@@ -1,15 +1,15 @@
 import { godCodeLogger } from './godCodeLogger';
-import { ADMIN_CODEWORD, MASTER_CODEWORD } from '../../../governance';
+import { verifyCodeword } from '../../../governance';
 
 export class DualCodewordVault {
-  private adminCodeword = 'admin alpha'; // Legacy/Simulated
-  private masterCodeword = 'paro the god'; // S+++ Executive
-
-  verifyDualAuth(admin: string, master: string): boolean {
+  async verifyDualAuth(admin: string, master: string): Promise<boolean> {
     godCodeLogger.log('Verifying Dual-Codeword Authorization sequence...');
     
-    const adminOk = admin === this.adminCodeword || admin === ADMIN_CODEWORD;
-    const masterOk = master === this.masterCodeword || master === MASTER_CODEWORD;
+    const adminLevel = await verifyCodeword(admin);
+    const masterLevel = await verifyCodeword(master);
+
+    const adminOk = adminLevel === 'admin' || adminLevel === 'master';
+    const masterOk = masterLevel === 'master';
 
     if (adminOk && masterOk) {
       godCodeLogger.log('Dual-Codeword match confirmed.');

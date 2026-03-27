@@ -1,16 +1,13 @@
-import { EventEmitter } from 'events';
-
 /**
  * Global Event Bus for Raizen S+++ Rank Singularity
+ * Browser-compatible implementation (no Node.js 'events' dependency).
  * Allows cross-protocol communication and reactive "neural" synapses.
  */
-class RaizenEventBus extends EventEmitter {
+class RaizenEventBus {
   private static instance: RaizenEventBus;
+  private listeners: Map<string, Set<(data: any) => void>> = new Map();
 
-  private constructor() {
-    super();
-    this.setMaxListeners(200); // Support 150+ features
-  }
+  private constructor() {}
 
   static getInstance(): RaizenEventBus {
     if (!RaizenEventBus.instance) {
@@ -21,11 +18,19 @@ class RaizenEventBus extends EventEmitter {
 
   publish(eventId: string, data: any) {
     console.log(`[NEURAL] Event Published: ${eventId}`, data);
-    this.emit(eventId, data);
+    const cbs = this.listeners.get(eventId);
+    if (cbs) cbs.forEach(cb => cb(data));
   }
 
   subscribe(eventId: string, callback: (data: any) => void) {
-    this.on(eventId, callback);
+    if (!this.listeners.has(eventId)) {
+      this.listeners.set(eventId, new Set());
+    }
+    this.listeners.get(eventId)!.add(callback);
+  }
+
+  unsubscribe(eventId: string, callback: (data: any) => void) {
+    this.listeners.get(eventId)?.delete(callback);
   }
 }
 

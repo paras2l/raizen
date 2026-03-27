@@ -1,7 +1,7 @@
 import { eventBus } from '../core/event-bus';
 import { RaizenBasePlugin } from '../base';
 import { ActionResult, PluginAction } from '../types';
-import { ADMIN_CODEWORD, MASTER_CODEWORD } from '../../governance';
+import { verifyCodeword } from '../../governance';
 
 /**
  * PerceptionEngine: THE ZENITH MULTIMODAL INTAKE GRID (GOD PRO ULTRA PRO MAX LEVEL)
@@ -249,6 +249,8 @@ export class PerceptionEnginePlugin extends RaizenBasePlugin {
     this.log('🔱 Commencing Neural Voice-Match Convergence...');
     
     const lowerCodeword = codeword.toLowerCase();
+    const codewordLevel = await verifyCodeword(codeword);
+    
     const sovereignWord = 'paro the god';
     const eliteWords = ['raizen one', 'ghost'];
     const standardWord = 'hey raizen';
@@ -256,10 +258,10 @@ export class PerceptionEnginePlugin extends RaizenBasePlugin {
     let isMatched = false;
     let resonanceTier = 'UNKNOWN';
 
-    if (lowerCodeword === sovereignWord || lowerCodeword === MASTER_CODEWORD.toLowerCase()) {
+    if (lowerCodeword === sovereignWord || codewordLevel === 'master') {
       isMatched = true;
       resonanceTier = 'SOVEREIGN';
-    } else if (eliteWords.includes(lowerCodeword) || lowerCodeword === ADMIN_CODEWORD.toLowerCase()) {
+    } else if (eliteWords.includes(lowerCodeword) || codewordLevel === 'admin') {
       isMatched = true;
       resonanceTier = 'ELITE';
     } else if (lowerCodeword === standardWord) {

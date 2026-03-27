@@ -5,8 +5,6 @@
 import { supabase } from './supabase';
 
 // --- Constants & Config ---
-export const ADMIN_CODEWORD = import.meta.env.VITE_ADMIN_CODEWORD || 'paro the chief';
-export const MASTER_CODEWORD = import.meta.env.VITE_MASTER_CODEWORD || 'paro the master';
 export const IMMUTABLE_BOUNDARY_PREFIXES = ['/boundary', '/src/lib/governance'];
 export const SENSITIVE_CATEGORIES = new Set(['filesystem', 'network', 'codegen', 'system', 'knowledge']);
 
@@ -151,32 +149,31 @@ class ApprovalStore {
 
 export const approvalStore = new ApprovalStore();
 
-// --- Core Policy Logic ---
+// --- Utilities ---
+const getSecurityBridge = () => (window as any).raizen?.security;
 
 /**
- * Checks if a codeword is valid.
+ * Checks if a codeword is valid. (Now Async/Secure)
  */
-export function verifyCodeword(value: string): 'admin' | 'master' | null {
-  const norm = value.trim().toLowerCase();
-  if (norm.includes(MASTER_CODEWORD)) return 'master';
-  if (norm.includes(ADMIN_CODEWORD)) return 'admin';
+export async function verifyCodeword(value: string): Promise<'admin' | 'master' | null> {
+  const bridge = getSecurityBridge();
+  if (bridge) return await bridge.verify(value);
   return null;
 }
 
 /**
- * Strips codewords from text.
+ * Strips codewords from text. (Now Async/Secure)
  */
-export function cleanCodeword(text: string): string {
-  return text
-    .replace(new RegExp(MASTER_CODEWORD, 'ig'), '')
-    .replace(new RegExp(ADMIN_CODEWORD, 'ig'), '')
-    .trim();
+export async function cleanCodeword(text: string): Promise<string> {
+  const bridge = getSecurityBridge();
+  if (bridge) return await bridge.clean(text);
+  return text;
 }
 
 /**
  * Integrated validation for chat messages.
  */
-export function checkCodewordObedience(text: string): ObedienceResult {
+export async function checkCodewordObedience(text: string): Promise<ObedienceResult> {
   const lowerText = text.toLowerCase();
   
   // 1. Harmful Pattern Check
@@ -192,16 +189,16 @@ export function checkCodewordObedience(text: string): ObedienceResult {
   // 2. Restricted Command Check
   const isRestricted = RESTRICTED_PATTERNS.some(p => p.test(lowerText));
   if (isRestricted) {
-    const level = verifyCodeword(text);
+    const level = await verifyCodeword(text);
     if (level) {
       auditLedger.append('policy_check', { text, result: 'allowed', level });
-      return { allowed: true, cleanText: cleanCodeword(text) };
+      return { allowed: true, cleanText: await cleanCodeword(text) };
     }
     
     auditLedger.append('policy_check', { text, result: 'blocked', reason: 'unauthorized_restricted' });
     return {
       allowed: false,
-      reason: 'Missing authorization codeword ("paro the chief" or "paro the master") for restricted command.',
+      reason: 'Missing authorization codeword for restricted command.',
       cleanText: text
     };
   }
@@ -215,29 +212,33 @@ export function checkCodewordObedience(text: string): ObedienceResult {
 export async function evaluateActionPolicy(req: ActionRequest): Promise<PolicyDecision> {
   // Plugin action logic
   if (req.category === 'Plugin') {
-    const isSensitive = req.payload?.sensitive !== false; // Assuming 'sensitive: false' explicitly marks it as non-sensitive
+    const isSensitive = req.payload?.sensitive !== false;
     if (isSensitive) {
-      if (req.codeword === MASTER_CODEWORD) return { allowed: true, requiresApproval: false, ruleId: 'plugin-master-bypass', reason: 'Master codeword provided for sensitive plugin action.' };
-      if (req.codeword === ADMIN_CODEWORD) return { allowed: true, requiresApproval: false, ruleId: 'plugin-admin-auth', reason: 'Admin codeword provided for sensitive plugin action.' };
+      const level = await verifyCodeword(req.codeword || '');
+      if (level === 'master') return { allowed: true, requiresApproval: false, ruleId: 'plugin-master-bypass', reason: 'Master codeword provided for sensitive plugin action.' };
+      if (level === 'admin') return { allowed: true, requiresApproval: false, ruleId: 'plugin-admin-auth', reason: 'Admin codeword provided for sensitive plugin action.' };
       return { allowed: false, requiresApproval: true, ruleId: 'plugin-sensitive-gate', reason: 'Sensitive plugin execution requires authorization codeword or approval.' };
     }
     return { allowed: true, requiresApproval: false, ruleId: 'plugin-allow', reason: 'Non-sensitive plugin action allowed.' };
   }
 
-  // Original logic (adapted to new ActionRequest structure)
+  // Original logic
   const isMasterGated = MASTER_GATED_ACTION_IDS.has(req.id);
   const isHarmful = HARMFUL_PATTERN.test(`${req.id} ${req.intent || ''}`);
 
-  if ((isMasterGated || isHarmful) && !verifyCodeword(req.codeword || '')) {
-    return {
-      allowed: false,
-      requiresApproval: false,
-      ruleId: 'master-gate',
-      reason: 'Action requires MASTER level authorization.'
-    };
+  if (isMasterGated || isHarmful) {
+    const level = await verifyCodeword(req.codeword || '');
+    if (level !== 'master') {
+      return {
+        allowed: false,
+        requiresApproval: false,
+        ruleId: 'master-gate',
+        reason: 'Action requires MASTER level authorization.'
+      };
+    }
   }
 
-  if (req.intent) { // Assuming intent now holds the path for path-related checks
+  if (req.intent) {
     const normPath = normalizePath(req.intent);
     if (IMMUTABLE_BOUNDARY_PREFIXES.some(pre => normPath.startsWith(pre))) {
       return {
@@ -249,11 +250,9 @@ export async function evaluateActionPolicy(req: ActionRequest): Promise<PolicyDe
     }
   }
 
-  // This check needs to be adapted as ActionCategory is now different.
-  // Assuming 'System' category is the new equivalent for sensitive system actions.
   if (req.category === 'System' || req.category === 'Terminal' || req.category === 'Nmap' || req.category === 'Execute') {
     return {
-      allowed: true, // This might need further refinement based on specific system actions
+      allowed: true,
       requiresApproval: true,
       ruleId: 'sensitive-category-gate',
       reason: 'Sensitive system action requires explicit admin verification.'

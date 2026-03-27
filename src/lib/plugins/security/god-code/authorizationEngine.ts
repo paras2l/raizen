@@ -19,7 +19,7 @@ export class AuthorizationEngine {
     // 2. Fallback: Dual-Codeword
     if (params.adminCode && params.masterCode) {
       godCodeLogger.fallback();
-      const isOk = dualCodewordVault.verifyDualAuth(params.adminCode, params.masterCode);
+      const isOk = await dualCodewordVault.verifyDualAuth(params.adminCode, params.masterCode);
       if (isOk) {
         godCodeLogger.authorized(tier, 'Dual-Codeword');
         return { authorized: true, tier, method: 'Dual-Codeword', token: 'AUTH-CODE-SILVER' };

@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { 
   checkCodewordObedience, 
   evaluateActionPolicy,
-  ADMIN_CODEWORD, 
-  MASTER_CODEWORD, 
+  verifyCodeword,
   IMMUTABLE_BOUNDARY_PREFIXES,
   auditLedger,
   AuditEntry,
@@ -57,11 +56,13 @@ interface Tab {
   icon: React.ReactNode
 }
 
+/** Core Configuration for Neural Hub Agents */
 interface AgentConfig {
-  name: string
-  modelId: string
-  apiKey: string
-  provider: string
+  id: string;
+  name: string;
+  modelId: string;
+  apiKey: string;
+  provider: string;
 }
 
 interface Message {
@@ -70,6 +71,12 @@ interface Message {
   sender: 'user' | 'assistant'
   timestamp: Date
 }
+
+// --- Constants ---
+const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN, a high-rank autonomous workstation OS. You are loyal, highly intelligent, and possess a nuanced, sophisticated sense of humor. You are not a simple robot; you are a partner in the user's workstation. 
+Your tone is professional, efficient, and slightly witty. 
+You refer to yourself as Raizen. You are aware that you control various workstation plugins and security boundaries. 
+Maintain a deeply personalized assistant experience.`;
 
 interface SidebarProps {
   isMobile: boolean
@@ -180,7 +187,7 @@ function Sidebar({
         {/* ── Multi-Session Switcher ── */}
         {(isSidebarOpen || isMobile) && (
           <div className="sidebar-sessions">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div className="sidebar-session-header">
               <div className="session-divider">SESSIONS</div>
               <button 
                 className="new-session-btn" 
@@ -228,9 +235,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('chat')
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024)
-  const [isModalOpen, setIsModalOpen] = useState(false)
   const [securityError, setSecurityError] = useState<string | null>(null)
-  const [agentConfig, setAgentConfig] = useState<AgentConfig | null>(null)
+  const [agents, setAgents] = useState<AgentConfig[]>([])
+  const [activeAgentId, setActiveAgentId] = useState<string | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [editingAgentId, setEditingAgentId] = useState<string | null>(null)
+  const [showAddForm, setShowAddForm] = useState(false)
   const [voiceMode, setVoiceMode] = useState(false)
   const [currentSessionId, setCurrentSessionId] = useState<string>('default')
   const [sessions, setSessions] = useState<Map<string, Message[]>>(new Map([['default', []]]))
@@ -238,13 +248,27 @@ export default function App() {
   
   const ghostContainerRef = useRef<HTMLDivElement>(null)
 
+  // Persistence & Initialization
   useEffect(() => {
-    if (ghostContainerRef.current) {
-      ghostEngine.setContainer(ghostContainerRef.current)
+    const savedAgents = localStorage.getItem('raizen-agents')
+    const savedActiveId = localStorage.getItem('raizen-active-agent-id')
+    if (savedAgents) {
+      const parsed = JSON.parse(savedAgents)
+      setAgents(parsed)
+      if (savedActiveId) setActiveAgentId(savedActiveId)
+      else if (parsed.length > 0) setActiveAgentId(parsed[0].id)
     }
   }, [])
+
+  useEffect(() => {
+    localStorage.setItem('raizen-agents', JSON.stringify(agents))
+    if (activeAgentId) localStorage.setItem('raizen-active-agent-id', activeAgentId)
+  }, [agents, activeAgentId])
+
+  const activeAgent = agents.find(a => a.id === activeAgentId) || null
+
   // Form State
-  const [formName, setFormName] = useState('Jarvis Primary')
+  const [formName, setFormName] = useState('')
   const [formModel, setFormModel] = useState('meta/llama-3')
   const [formKey, setFormKey] = useState('')
   const [formProvider, setFormProvider] = useState('NVIDIA')
@@ -262,13 +286,52 @@ export default function App() {
   }
 
   const handleConnect = () => {
-    setAgentConfig({
+    if (!formName || !formKey) return
+
+    const newAgent: AgentConfig = {
+      id: editingAgentId || `agent-${Date.now()}`,
       name: formName,
       modelId: formModel,
       apiKey: formKey,
       provider: formProvider
-    })
-    setIsModalOpen(false)
+    }
+
+    if (editingAgentId) {
+      setAgents(prev => prev.map(a => a.id === editingAgentId ? newAgent : a))
+    } else {
+      setAgents(prev => [...prev, newAgent])
+      if (!activeAgentId) setActiveAgentId(newAgent.id)
+    }
+
+    resetForm()
+    setShowAddForm(false)
+    setEditingAgentId(null)
+  }
+
+  const resetForm = () => {
+    setFormName('')
+    setFormModel('meta/llama-3')
+    setFormKey('')
+    setFormProvider('NVIDIA')
+  }
+
+  const deleteAgent = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation()
+    const newAgents = agents.filter(a => a.id !== id)
+    setAgents(newAgents)
+    if (activeAgentId === id) {
+      setActiveAgentId(newAgents.length > 0 ? newAgents[0].id : null)
+    }
+  }
+
+  const startEdit = (agent: AgentConfig, e: React.MouseEvent) => {
+    e.stopPropagation()
+    setEditingAgentId(agent.id)
+    setFormName(agent.name)
+    setFormModel(agent.modelId)
+    setFormKey(agent.apiKey)
+    setFormProvider(agent.provider)
+    setShowAddForm(true)
   }
 
   // Responsive Listeners
@@ -309,7 +372,7 @@ export default function App() {
       <main className="main-viewport">
         {/* ── Header ── */}
         <header className="viewport-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <div className="viewport-header-left">
             {isMobile && (
               <button 
                 className="burger-btn" 
@@ -337,18 +400,21 @@ export default function App() {
               {!isMobile && <span>{voiceMode ? 'VOICE ON' : 'VOICE OFF'}</span>}
             </button>
 
-            {agentConfig ? (
+            {activeAgent ? (
               <button 
                 className="brain-badge active" 
                 onClick={() => setIsModalOpen(true)}
               >
                 <Terminal size={14} />
-                {!isMobile && <span className="brain-tag">{agentConfig.modelId}</span>}
+                {!isMobile && <span className="brain-tag">{activeAgent.name || activeAgent.modelId}</span>}
               </button>
             ) : (
               <button 
                 className="connect-btn" 
-                onClick={() => setIsModalOpen(true)}
+                onClick={() => {
+                  setShowAddForm(true)
+                  setIsModalOpen(true)
+                }}
               >
                 <Plus size={14} />
                 {!isMobile && <span>Connect Agent</span>}
@@ -370,7 +436,7 @@ export default function App() {
             >
               {activeTab === 'chat' && (
                 <ChatView 
-                  config={agentConfig} 
+                  config={activeAgent} 
                   voiceMode={voiceMode} 
                   securityError={securityError} 
                   setSecurityError={setSecurityError} 
@@ -411,69 +477,121 @@ export default function App() {
               </button>
               
               <div className="modal-header">
-                <h2>Configure Agent</h2>
-                <p>Register a reasoning engine for the Raizen neural link.</p>
+                <h2>Neural Hub</h2>
+                <p>Management interface for autonomous reasoning links.</p>
               </div>
 
               <div className="modal-body">
-                <div className="form-group">
-                  <label htmlFor="provider-select"><Cpu size={14} /> Provider</label>
-                  <select 
-                    id="provider-select"
-                    value={formProvider} 
-                    onChange={e => setFormProvider(e.target.value)}
-                  >
-                    <option>NVIDIA</option>
-                    <option>OpenAI</option>
-                    <option>Anthropic</option>
-                    <option>Google (Gemini)</option>
-                    <option>xAI (Grok)</option>
-                    <option>OpenRouter</option>
-                    <option>Mistral</option>
-                    <option>DeepSeek</option>
-                    <option>Perplexity</option>
-                    <option>Groq</option>
-                    <option>Hugging Face</option>
-                    <option>Custom</option>
-                  </select>
-                </div>
+                {showAddForm ? (
+                  <>
+                    <div className="form-group">
+                      <label htmlFor="provider-select"><Cpu size={14} /> Provider</label>
+                      <select 
+                        id="provider-select"
+                        value={formProvider} 
+                        onChange={e => setFormProvider(e.target.value)}
+                      >
+                        <option>NVIDIA</option>
+                        <option>OpenAI</option>
+                        <option>Anthropic</option>
+                        <option>Google (Gemini)</option>
+                        <option>xAI (Grok)</option>
+                        <option>OpenRouter</option>
+                        <option>Mistral</option>
+                        <option>DeepSeek</option>
+                        <option>Perplexity</option>
+                        <option>Groq</option>
+                        <option>Hugging Face</option>
+                        <option>Custom</option>
+                      </select>
+                    </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="model-id-input"><Database size={14} /> Model ID</label>
-                    <input 
-                      id="model-id-input"
-                      type="text" 
-                      value={formModel} 
-                      onChange={e => setFormModel(e.target.value)} 
-                      placeholder="e.g. meta/llama-3" 
-                    />
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label htmlFor="model-id-input"><Database size={14} /> Model ID</label>
+                        <input 
+                          id="model-id-input"
+                          type="text" 
+                          value={formModel} 
+                          onChange={e => setFormModel(e.target.value)} 
+                          placeholder="e.g. meta/llama-3" 
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label htmlFor="agent-name-input"><Box size={14} /> Agent Name</label>
+                        <input 
+                          id="agent-name-input"
+                          type="text" 
+                          value={formName} 
+                          onChange={e => setFormName(e.target.value)} 
+                          placeholder="Identifier..."
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-group">
+                      <label htmlFor="api-key-input"><Key size={14} /> API Secret</label>
+                      <input 
+                        id="api-key-input"
+                        type="password" 
+                        value={formKey} 
+                        onChange={e => setFormKey(e.target.value)} 
+                        placeholder="••••••••••••••••" 
+                      />
+                    </div>
+                    
+                    <div className="modal-footer" style={{ marginTop: '1.5rem', display: 'flex', gap: '0.75rem' }}>
+                      <button className="confirm-btn" onClick={handleConnect}>
+                        {editingAgentId ? 'Update Identity' : 'Register Link'}
+                      </button>
+                      <button 
+                        className="confirm-btn" 
+                        style={{ background: 'var(--panel-soft)', color: 'var(--ink-main)' }}
+                        onClick={() => {
+                          setShowAddForm(false)
+                          setEditingAgentId(null)
+                          resetForm()
+                        }}
+                      >
+                        Back to Hub
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <div className="agent-registry-list">
+                    {agents.length === 0 ? (
+                      <div style={{ padding: '2rem', textAlign: 'center', opacity: 0.5 }}>
+                        No neural links registered.
+                      </div>
+                    ) : (
+                      agents.map(agent => (
+                        <div 
+                          key={agent.id} 
+                          className={`agent-entry ${activeAgentId === agent.id ? 'active' : ''}`}
+                          onClick={() => setActiveAgentId(agent.id)}
+                        >
+                          <div className="agent-entry-info">
+                            <div className="agent-entry-name">{agent.name}</div>
+                            <div className="agent-entry-detail">{agent.provider} • {agent.modelId}</div>
+                          </div>
+                          <div className="agent-entry-actions">
+                            <button onClick={(e) => startEdit(agent, e)} title="Edit Configuration"><Settings size={14} /></button>
+                            <button onClick={(e) => deleteAgent(agent.id, e)} title="Sever Link" style={{ color: 'var(--accent-red)' }}><X size={14} /></button>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    <button 
+                      className="add-agent-row-btn" 
+                      onClick={() => {
+                        resetForm()
+                        setShowAddForm(true)
+                      }}
+                    >
+                      <Plus size={16} /> Register New Neural Identity
+                    </button>
                   </div>
-                  <div className="form-group">
-                    <label htmlFor="agent-name-input"><Box size={14} /> Name</label>
-                    <input 
-                      id="agent-name-input"
-                      type="text" 
-                      value={formName} 
-                      onChange={e => setFormName(e.target.value)} 
-                    />
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="api-key-input"><Key size={14} /> API Key</label>
-                  <input 
-                    id="api-key-input"
-                    type="password" 
-                    value={formKey} 
-                    onChange={e => setFormKey(e.target.value)} 
-                    placeholder="••••••••••••••••" 
-                  />
-                </div>
-              </div>
-
-              <div className="modal-footer">
-                <button className="confirm-btn" onClick={handleConnect}>Connect Agent</button>
+                )}
               </div>
             </motion.div>
           </div>
@@ -1005,6 +1123,97 @@ export default function App() {
   )
 }
 
+function SystemStatusPanel() {
+  const [cpuLoad, setCpuLoad] = useState(12)
+  const [memLoad, setMemLoad] = useState(24)
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCpuLoad(Math.floor(Math.random() * 15) + 5)
+      setMemLoad(Math.floor(Math.random() * 10) + 20)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="system-status-panel">
+      <header className="telemetry-header">
+        <h4 className="telemetry-title">NEURAL TELEMETRY</h4>
+      </header>
+      <div className="stat-card">
+        <span className="stat-label">COGNITIVE LOAD</span>
+        <span className="stat-value">{cpuLoad}%</span>
+        <div className="progress-bar-container" style={{ height: 4 }}>
+          <motion.div className="progress-fill" animate={{ width: `${cpuLoad}%` }} transition={{ duration: 1 }} />
+        </div>
+      </div>
+      <div className="stat-card">
+        <span className="stat-label">MEMORY SYNAPSE</span>
+        <span className="stat-value">{memLoad}%</span>
+        <div className="progress-bar-container" style={{ height: 4 }}>
+          <motion.div className="progress-fill" animate={{ width: `${memLoad}%` }} transition={{ duration: 1 }} />
+        </div>
+      </div>
+      <div className="stat-card">
+        <span className="stat-label">SECURITY MESH</span>
+        <div className="telemetry-status-row">
+          <div className="pulse-dot" style={{ width: 8, height: 8 }} />
+          <span>Quantum Shield</span>
+        </div>
+        <div className="telemetry-status-row">
+          <div className="pulse-dot" style={{ width: 8, height: 8, background: 'var(--accent-secondary)' }} />
+          <span>Active Audit</span>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function NeuralDashboard({ config }: { config: AgentConfig | null }) {
+  return (
+    <div className="welcome-hero">
+      <motion.div
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        className="dashboard-grid"
+      >
+        <div className="dashboard-header">
+          <h1 className="dashboard-hero-title">
+            {config ? `Neural Link: ${config.name}` : "System Online"}
+          </h1>
+          <p className="dashboard-hero-subtitle">
+            {config 
+              ? `Authorized reasoning via ${config.modelId}`
+              : "Raizen S+++ Rank Singularity initialized. Waiting for agent connection."}
+          </p>
+        </div>
+
+        <div className="stat-card">
+          <Zap size={20} color="var(--accent-secondary)" />
+          <span className="stat-label">ENGINE STATUS</span>
+          <span className="stat-value">{config ? 'LINKED' : 'STANDBY'}</span>
+        </div>
+        <div className="stat-card">
+          <Lock size={20} color="var(--accent-primary)" />
+          <span className="stat-label">BOUNDARIES</span>
+          <span className="stat-value">PROTECTED</span>
+        </div>
+        <div className="stat-card">
+          <Activity size={20} color="var(--accent-primary)" />
+          <span className="stat-label">LATENCY</span>
+          <span className="stat-value">24ms</span>
+        </div>
+        {!config && (
+          <div className="stat-card dashboard-info-card">
+            <span className="stat-label" style={{ color: 'rgba(255,255,255,0.6)' }}>INITIALIZATION REQUIRED</span>
+            <p>Connect an agent to bridge the neural gap and begin autonomy.</p>
+          </div>
+        )}
+      </motion.div>
+    </div>
+  )
+}
+
 function ChatView({ 
   config, 
   voiceMode, 
@@ -1019,7 +1228,15 @@ function ChatView({
 }: ChatViewProps) {
   const [inputValue, setInputValue] = useState('')
   const [isListening, setIsListening] = useState(false)
+  const [isThinking, setIsThinking] = useState(false)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024)
   const chatEndRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 1024)
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -1046,11 +1263,11 @@ function ChatView({
     window.speechSynthesis.speak(utterance)
   }
 
-  const handleSend = (text: string = inputValue) => {
+  const handleSend = async (text: string = inputValue) => {
     if (!text.trim()) return
 
     // Governance Check
-    const policyResult = checkCodewordObedience(text)
+    const policyResult = await checkCodewordObedience(text)
     if (!policyResult.allowed) {
       setSecurityError(policyResult.reason || 'Unauthorized operation.')
       setTimeout(() => setSecurityError(null), 4000)
@@ -1058,12 +1275,20 @@ function ChatView({
     }
 
     const cleanInput = policyResult.cleanText
-    const userMsg: Message = { id: Date.now().toString(), text: cleanInput, sender: 'user', timestamp: new Date() }
-    setMessages([...messages, userMsg])
+    const lowerInput = cleanInput.toLowerCase()
+    
+    const userMsg: Message = { 
+      id: Date.now().toString(), 
+      text, 
+      sender: 'user', 
+      timestamp: new Date() 
+    }
+    
+    const messagesWithUser = [...messages, userMsg]
+    setMessages(messagesWithUser)
     setInputValue('')
     
     // Plugin & Capability Recognition
-    const lowerInput = cleanInput.toLowerCase()
     let pluginId = ''
     if (lowerInput.includes('whatsapp')) pluginId = 'whatsapp'
     else if (lowerInput.includes('telegram')) pluginId = 'telegram'
@@ -1080,62 +1305,96 @@ function ChatView({
     const isTerminalAction = lowerInput.startsWith('run command') || lowerInput.startsWith('terminal') || lowerInput.startsWith('shell')
     const isEmailAction = lowerInput.startsWith('email') || lowerInput.startsWith('mail') || lowerInput.startsWith('send mail') || lowerInput.startsWith('draft')
 
-    if (lowerInput.startsWith('new session') || lowerInput.startsWith('clear chat') || lowerInput.startsWith('reset brain')) {
-      const newId = `session-${Date.now()}`
-      setSessions(prev => new Map(prev).set(newId, []))
-      setCurrentSessionId(newId)
-      setMessages([])
-      return
+    // 3. YouTube Link Learning Auto-Trigger
+    const ytRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i
+    const ytMatch = cleanInput.match(ytRegex)
+    
+    if (ytMatch) {
+      try {
+        setIsThinking(true)
+        const result = await pluginRegistry.executeAction('scholar-protocol', 'acquire-knowledge', { url: cleanInput, videoId: ytMatch[1] })
+        if (result.success) {
+          const scholarMsg: Message = {
+            id: (Date.now() + 1).toString(),
+            text: `🧠 **Scholar Protocol Activated**\n\nI have synthesized the following knowledge from the video link you provided:\n\n${result.data.summary}`,
+            sender: 'assistant',
+            timestamp: new Date()
+          }
+          const updated = [...messagesWithUser, scholarMsg]
+          setMessages(updated)
+          setSessions(prev => {
+            const newMap = new Map(prev)
+            newMap.set(currentSessionId, updated)
+            return newMap
+          })
+          if (voiceMode) speak("YouTube synthesis complete. Knowledge internalized.")
+          setIsThinking(false)
+          return // Exit early
+        }
+      } catch (e) {
+        console.error('[SCHOLAR ERROR]', e)
+      } finally {
+        setIsThinking(false)
+      }
     }
 
-    // Auto-reply simulation
-    setTimeout(async () => {
-      let responseText = `Objective received: "${cleanInput}". Synthesizing neural response...`
+    // 4. Process Neural Request
+    try {
+      let responseText = ""
 
       if (isTerminalAction) {
         responseText = `[TERMINAL] Executing audited system command. Permission granted via Master Codeword. Output: "Success. System state updated."`
       } else if (isEmailAction) {
-        const to = cleanInput.match(/to\s+([^\s]+)/)?.[1] || 'Recipients'
-        const action = lowerInput.startsWith('draft') ? 'draft' : 'send'
-        const result = await pluginRegistry.executeAction('email', action, { 
-          to, 
-          subject: 'Raizen Automated Transmission', 
-          body: cleanInput 
-        })
-        if (result.success) {
-          responseText = `[EMAIL] ${result.data.message} ${result.auditId ? `Audit ID: ${result.auditId}` : ''}`
+        if (!config) {
+          responseText = "⚠️ Email Bridge requires an active Neural Link. Please connect an agent."
         } else {
-          responseText = `⚠️ Email Failure: ${result.error}`
+          const to = cleanInput.match(/to\s+([^\s]+)/)?.[1] || 'Recipients'
+          const action = lowerInput.startsWith('draft') ? 'draft' : 'send'
+          const result = await pluginRegistry.executeAction('email', action, { 
+            to, 
+            subject: 'Raizen Automated Transmission', 
+            body: cleanInput 
+          })
+          responseText = result.success 
+            ? `[EMAIL] ${result.data.message} ${result.auditId ? `Audit ID: ${result.auditId}` : ''}`
+            : `⚠️ Email Failure: ${result.error}`
         }
       } else if (isBrowserAction) {
-        const query = cleanInput.replace(/^(browse|search|find)\s+/, "").trim()
-        const searchResult = await pluginRegistry.executeAction('search', 'query', { query })
-        
-        if (searchResult.success) {
-          const results = searchResult.data.results
-          const summary = searchResult.data.summary
-          responseText = `${summary}\n\n`
-          results.forEach((r: any, i: number) => {
-            responseText += `${i+1}. [${r.title}](${r.url})\n`
-          })
+        if (!config) {
+          responseText = "⚠️ Search capabilities require an active Neural Link. Please connect an agent."
         } else {
-          responseText = `⚠️ Search Error: ${searchResult.error}`
+          const query = cleanInput.replace(/^(browse|search|find)\s+/, "").trim()
+          const searchResult = await pluginRegistry.executeAction('search', 'query', { query })
+          
+          if (searchResult.success) {
+            const { results, summary } = searchResult.data
+            responseText = `${summary}\n\n` + results.map((r: any, i: number) => `${i+1}. [${r.title}](${r.url})`).join('\n')
+          } else {
+            responseText = `⚠️ Search Error: ${searchResult.error}`
+          }
         }
       } else if (pluginId) {
         const plugin = pluginRegistry.get(pluginId)
-        if (plugin) {
-          // Evaluate Plugin Policy
+        if (!plugin) {
+           responseText = `⚠️ System Error: Extension [${pluginId}] not found.`
+        } else if (!config) {
+          responseText = `⚠️ [${plugin.name}] Bridge requires an active Neural Link.`
+        } else {
+          const codewordStatus = await verifyCodeword(text);
+          const codeword = codewordStatus === 'admin' || codewordStatus === 'master' ? text : '';
+          
           const policy = await evaluateActionPolicy({
             id: 'plugin_send',
             category: 'Plugin',
             intent: cleanInput,
             payload: { sensitive: true },
-            codeword: text.includes(ADMIN_CODEWORD) ? ADMIN_CODEWORD : (text.includes(MASTER_CODEWORD) ? MASTER_CODEWORD : '')
+            codeword
           })
 
           if (!policy.allowed) {
             setSecurityError(policy.reason || 'Plugin action denied by governance.')
             setTimeout(() => setSecurityError(null), 4000)
+            setIsThinking(false)
             return
           }
 
@@ -1144,12 +1403,74 @@ function ChatView({
             text: cleanInput.split(':').pop()?.trim() || cleanInput 
           })
 
-          if (result.success) {
-            responseText = `[${plugin.name}] secure bridge active. Message transmitted. Audit ID: ${result.auditId?.slice(0, 8)}`
-          } else {
-            responseText = `[${plugin.name}] bridge error: ${result.error}`
-          }
+          responseText = result.success 
+            ? `[${plugin.name}] secure bridge active. Message transmitted. Audit ID: ${result.auditId?.slice(0, 8)}`
+            : `[${plugin.name}] bridge error: ${result.error}`
         }
+      } else if (config) {
+        // --- REAL NEURAL FETCH ---
+        try {
+          const apiMap: Record<string, string> = {
+            'NVIDIA': 'https://integrate.api.nvidia.com/v1/chat/completions',
+            'OpenAI': 'https://api.openai.com/v1/chat/completions',
+            'Anthropic': 'https://api.anthropic.com/v1/messages',
+            'DeepSeek': 'https://api.deepseek.com/chat/completions',
+            'Groq': 'https://api.groq.com/openai/v1/chat/completions',
+            'OpenRouter': 'https://openrouter.ai/api/v1/chat/completions'
+          }
+
+          const endpoint = apiMap[config.provider] || apiMap['OpenAI']
+          const headers: Record<string, string> = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+          }
+          
+          // Conversational Context Mapping (Last 8 messages for token efficiency)
+          const history = messages.slice(-8).map(m => ({
+            role: m.sender === 'user' ? 'user' : 'assistant',
+            content: m.text
+          }))
+
+          const promptMessages = [
+            { role: 'system', content: RAIZEN_SYSTEM_PROMPT },
+            ...history,
+            { role: 'user', content: cleanInput }
+          ]
+
+          const body = config.provider === 'Anthropic' 
+            ? { 
+                model: config.modelId, 
+                system: RAIZEN_SYSTEM_PROMPT,
+                messages: history.concat({ role: 'user', content: cleanInput }), 
+                max_tokens: 1024 
+              }
+            : { 
+                model: config.modelId, 
+                messages: promptMessages
+              }
+
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(body)
+          })
+
+          if (!response.ok) throw new Error(`Neural Link Status: ${response.status}`)
+          
+          const data = await response.json()
+          responseText = config.provider === 'Anthropic' 
+            ? data.content[0].text 
+            : data.choices[0].message.content
+        } catch (e: any) {
+          console.error('[NEURAL LINK ERROR]', e)
+          const errorMsg = e.message.includes('401') 
+            ? "Unauthorized. Please verify your API Key in the 'Connect Agent' settings."
+            : e.message
+          responseText = `⚠️ Neural Link Interrupted: ${errorMsg}. Falling back to high-sovereignty mode.`
+        }
+      } else {
+        // Zero-Baud Fallback
+        responseText = `⚠️ Neural engine unlinked. Operating in local "Zero-Baud" mode.\nObjective received: "${cleanInput}". Synthesizing local override...`
       }
 
       const aiMsg: Message = { 
@@ -1159,7 +1480,7 @@ function ChatView({
         timestamp: new Date() 
       }
       
-      const updatedMessages = [...messages, aiMsg]
+      const updatedMessages = [...messagesWithUser, aiMsg]
       setMessages(updatedMessages)
       setSessions(prev => {
         const newMap = new Map(prev)
@@ -1168,7 +1489,9 @@ function ChatView({
       })
 
       if (voiceMode) speak(aiMsg.text)
-    }, 1000)
+    } finally {
+      setIsThinking(false)
+    }
   }
 
   const startListening = () => {
@@ -1187,72 +1510,73 @@ function ChatView({
   }
 
   return (
-    <div className="chat-view">
+    <div className="chat-view full-page-chat">
       <div className="chat-messages">
-        {messages.length === 0 ? (
-          <div className="welcome-hero">
-            <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-            >
-              <h1 className="hero-title">
-                {config ? `Neural Link: ${config.name}` : "System online. Raizen active."}
-              </h1>
-              <p className="hero-subtitle">
-                {config 
-                  ? `Reasoning with ${config.modelId} over ${config.provider}.`
-                  : "Connect an agent to start the neural link."}
-              </p>
-            </motion.div>
-          </div>
-        ) : (
-          <div className="message-list">
-            {messages.map((m, i) => (
+        <div className="message-list">
+          {messages.length === 0 ? (
+            <div className="empty-chat-welcome">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                <h1 className="welcome-title">RAIZEN</h1>
+                <p className="welcome-subtitle">Full Spectrum Autonomous Neural Link Active.</p>
+              </motion.div>
+            </div>
+          ) : (
+            messages.map((m, i) => (
               <motion.div 
                 key={i} 
-                initial={{ opacity: 0, x: m.sender === 'user' ? 20 : -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
                 className={`message-bubble ${m.sender}`}
               >
                 <div className="bubble-content">{m.text}</div>
               </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      <div className="chat-input-bar">
-        <input 
-          type="text" 
-          value={inputValue}
-          onChange={e => setInputValue(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSend()}
-          placeholder={config ? "Message Raizen..." : "Please connect an agent to begin..."} 
-          disabled={!config} 
-          aria-label="Chat input"
-          title="Chat input"
-        />
-        {voiceMode && (
+            ))
+          )}
+          {isThinking && (
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="message-bubble assistant thinking"
+            >
+              <div className="bubble-content">
+                <div className="thinking-dots">
+                  <span></span><span></span><span></span>
+                </div>
+              </div>
+            </motion.div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+        
+        <div className="chat-input-bar">
+          <input 
+            type="text" 
+            value={inputValue}
+            onChange={e => setInputValue(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleSend()}
+            placeholder="Message Raizen..." 
+            aria-label="Chat input"
+            title="Chat input"
+          />
+          {voiceMode && (
+            <button 
+              className={`mic-btn ${isListening ? 'listening' : ''}`}
+              onClick={startListening}
+              aria-label={isListening ? 'Stop listening' : 'Start listening'}
+              title={isListening ? 'Stop listening' : 'Start listening'}
+            >
+              {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+            </button>
+          )}
           <button 
-            className={`mic-btn ${isListening ? 'listening' : ''}`}
-            onClick={startListening}
-            disabled={!config}
-            aria-label={isListening ? 'Stop listening' : 'Start listening'}
-            title={isListening ? 'Stop listening' : 'Start listening'}
+            className="send-btn" 
+            onClick={() => handleSend()} 
+            aria-label="Send message"
+            title="Send message"
           >
-            {isListening ? <Mic size={18} /> : <MicOff size={18} />}
+            <MessageSquare size={18} />
           </button>
-        )}
-        <button 
-          className="send-btn" 
-          onClick={() => handleSend()} 
-          disabled={!config}
-          aria-label="Send message"
-          title="Send message"
-        >
-          <MessageSquare size={18} />
-        </button>
+        </div>
       </div>
     </div>
   )
@@ -1384,8 +1708,8 @@ function ActivityLedgerView() {
 
 function SecurityCoreView() {
   const policies = [
-    { title: 'Admin Codeword', status: 'Verifying', detail: `Authorized via "${ADMIN_CODEWORD}"` },
-    { title: 'Master Codeword', status: 'Gating High-Risk', detail: `Authorized via "${MASTER_CODEWORD}"` },
+    { title: 'Admin Codeword', status: 'Verifying', detail: 'Authorized via Secure Bridge' },
+    { title: 'Master Codeword', status: 'Gating High-Risk', detail: 'Authorized via Secure Bridge' },
     { title: 'Immutable Boundaries', status: 'Active', detail: `Protecting: ${IMMUTABLE_BOUNDARY_PREFIXES.join(', ')}` },
     { title: 'Harmful Pattern Filter', status: 'Blocking', detail: 'Real-time lexical audit of neural link.' },
     { title: 'Audit Chains', status: 'Chaining', detail: 'Cryptographic linking of all security events.' },

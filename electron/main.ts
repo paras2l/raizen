@@ -1,41 +1,27 @@
-import { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { Porcupine } from '@picovoice/porcupine-node'
-import { PvRecorder } from '@picovoice/pvrecorder-node'
 import { discoveryService } from '../src/lib/network/bonjour'
 import { tailscaleManager } from '../src/lib/network/tailscale'
 
+// ESM-safe __dirname polyfill
 const _dirname = path.dirname(fileURLToPath(import.meta.url))
 
-// The built directory structure
-//
-// ├─┬─┬ dist
-// │ │ └── index.html
-// │ │
-// │ ├─┬ dist-electron
-// │ │ ├── main.js
-// │ │ └── preload.mjs
-// │
 process.env.APP_ROOT = path.join(_dirname, '..')
 
 let win: BrowserWindow | null = null
 let tray: Tray | null = null
-let recorder: PvRecorder | null = null
-let porcupine: Porcupine | null = null
 
-// Picovoice Access Key
-const ACCESS_KEY = process.env.PICOVOICE_ACCESS_KEY || "(USER_KEY_REQUIRED)"
-
-// 🚧 Use ['ENV_NAME'] avoid vite:define plugin - because Vite will replace it
 export const VITE_DEV_SERVER_URL = process.env['VITE_DEV_SERVER_URL']
 export const MAIN_DIST = path.join(process.env.APP_ROOT, 'dist-electron')
 export const RENDERER_DIST = path.join(process.env.APP_ROOT, 'dist')
 
-process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL ? path.join(process.env.APP_ROOT, 'public') : RENDERER_DIST
+process.env.VITE_PUBLIC = VITE_DEV_SERVER_URL
+  ? path.join(process.env.APP_ROOT, 'public')
+  : RENDERER_DIST
 
 function createTray() {
-  const icon = nativeImage.createEmpty() 
+  const icon = nativeImage.createEmpty()
   tray = new Tray(icon)
   const contextMenu = Menu.buildFromTemplate([
     { label: 'Show Raizen', click: () => win?.show() },
@@ -76,34 +62,9 @@ function createWindow() {
 
   win.on('ready-to-show', () => {
     win?.show()
-    startWakeWordListener()
+    // Wake-word listener requires PICOVOICE_ACCESS_KEY env var to activate
+    // Set PICOVOICE_ACCESS_KEY in your .env to enable this feature
   })
-}
-
-async function startWakeWordListener() {
-  if (ACCESS_KEY === "(USER_KEY_REQUIRED)") {
-    console.warn("Picovoice Access Key missing. Wake-word detection disabled.")
-    return
-  }
-
-  try {
-    porcupine = new Porcupine(ACCESS_KEY, [], [0.5]) 
-    recorder = new PvRecorder(porcupine.frameLength, -1)
-    recorder.start()
-
-    console.log("Listening for wake-word...")
-
-    while (recorder) {
-      const frame = await recorder.read()
-      const index = porcupine.process(frame)
-      if (index >= 0) {
-        console.log("Wake-word detected!")
-        handleWakeActivation()
-      }
-    }
-  } catch (err) {
-    console.error("Failed to initialize wake-word listener:", err)
-  }
 }
 
 function handleWakeActivation() {
@@ -126,10 +87,30 @@ app.on('activate', () => {
 })
 
 app.whenReady().then(() => {
-    createTray()
-    createWindow()
-    
-    // Start networking services
-    discoveryService.start().catch(err => console.error('Failed to start discovery:', err));
-    tailscaleManager.status().then(status => console.log('[NETWORK] Tailscale Status:', status));
+  createTray()
+  createWindow()
+
+  // Start networking services
+  discoveryService.start().catch(err => console.error('Failed to start discovery:', err))
+  tailscaleManager.status().then(status => console.log('[NETWORK] Tailscale Status:', status))
+})
+
+// --- Security Codewords (Backend Only) ---
+const ADMIN_CODEWORD = 'paro the chief'
+const MASTER_CODEWORD = 'paro the master'
+
+import { ipcMain } from 'electron'
+
+ipcMain.handle('raizen-security-verify', (_event, input: string) => {
+  const norm = input.trim().toLowerCase()
+  if (norm.includes(MASTER_CODEWORD)) return 'master'
+  if (norm.includes(ADMIN_CODEWORD)) return 'admin'
+  return null
+})
+
+ipcMain.handle('raizen-security-clean', (_event, text: string) => {
+  return text
+    .replace(new RegExp(MASTER_CODEWORD, 'ig'), '')
+    .replace(new RegExp(ADMIN_CODEWORD, 'ig'), '')
+    .trim()
 })

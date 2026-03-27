@@ -19,6 +19,11 @@ contextBridge.exposeInMainWorld('ipcRenderer', {
     return ipcRenderer.invoke(channel, ...rest)
   },
 
-  // You can expose other apts you need here.
-  // ...
+  // Security Bridging
+  raizen: {
+    security: {
+      verify: (input: string) => ipcRenderer.invoke('raizen-security-verify', input),
+      clean: (text: string) => ipcRenderer.invoke('raizen-security-clean', text),
+    }
+  }
 })

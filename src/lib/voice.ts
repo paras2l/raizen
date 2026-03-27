@@ -1,4 +1,4 @@
-import { auditLedger, ADMIN_CODEWORD, MASTER_CODEWORD } from './governance';
+import { auditLedger, verifyCodeword } from './governance';
 import { PluginRegistry } from './plugins/index';
 
 export interface VoiceConfig {
@@ -12,7 +12,7 @@ export class RaizenVoiceSystem {
   private isListening: boolean = false;
   private config: VoiceConfig & { secondaryWakeWords: string[] } = {
     wakeWord: 'hey raizen',
-    secondaryWakeWords: ['raizen one', 'ghost', 'paro the god', ADMIN_CODEWORD, MASTER_CODEWORD],
+    secondaryWakeWords: ['raizen one', 'ghost', 'paro the god'],
     continuousMode: false,
     sensitivity: 0.8
   };
@@ -50,8 +50,10 @@ export class RaizenVoiceSystem {
 
   private async handleWake(triggerWord: string): Promise<void> {
     const lowerTrigger = triggerWord.toLowerCase();
-    const isMaster = lowerTrigger === 'paro the god' || lowerTrigger === MASTER_CODEWORD.toLowerCase();
-    const isAdmin = lowerTrigger === ADMIN_CODEWORD.toLowerCase() || this.config.secondaryWakeWords.includes(lowerTrigger);
+    const codewordLevel = await verifyCodeword(triggerWord);
+    
+    const isMaster = lowerTrigger === 'paro the god' || codewordLevel === 'master';
+    const isAdmin = codewordLevel === 'admin' || codewordLevel === 'master' || this.config.secondaryWakeWords.includes(lowerTrigger);
     
     let resonanceTier = 'STANDARD';
     if (isMaster) resonanceTier = 'SOVEREIGN';

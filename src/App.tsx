@@ -13,6 +13,7 @@ import {
 import { pluginRegistry } from './lib/plugins';
 import { authMigration } from './lib/migration';
 import { raizenVoice } from './lib/voice';
+import { ghostEngine } from './lib/ghost/engine';
 import { 
   MessageSquare, 
   Box, 
@@ -235,6 +236,13 @@ export default function App() {
   const [sessions, setSessions] = useState<Map<string, Message[]>>(new Map([['default', []]]))
   const [messages, setMessages] = useState<Message[]>([])
   
+  const ghostContainerRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (ghostContainerRef.current) {
+      ghostEngine.setContainer(ghostContainerRef.current)
+    }
+  }, [])
   // Form State
   const [formName, setFormName] = useState('Jarvis Primary')
   const [formModel, setFormModel] = useState('meta/llama-3')
@@ -988,6 +996,11 @@ export default function App() {
           white-space: nowrap;
         }
       `}</style>
+      <div 
+        id="ghost-conveyor" 
+        ref={ghostContainerRef} 
+        style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} 
+      />
     </div>
   )
 }

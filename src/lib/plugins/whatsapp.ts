@@ -1,5 +1,7 @@
 import { RaizenPlugin, ActionResult, PluginAction, PluginCategoryId } from './types';
 import { auditLedger } from '../governance';
+import { ghostEngine } from '../ghost/engine';
+import { GHOST_SCRIPTS } from '../ghost/automation';
 
 /**
  * Raizen WhatsApp Bridge
@@ -45,8 +47,32 @@ export class WhatsAppPlugin implements RaizenPlugin {
 
   private async sendMessage(to: string, text: string): Promise<ActionResult> {
     console.log(`[WHATSAPP] Sending message to ${to}: ${text}`);
-    // Actual Baileys send logic would go here
-    return { success: true, data: { status: 'sent', to, text } };
+    
+    // 1. Try Baileys (API Bridge) - currently stubbed
+    const apiSuccess = false; // Simulated failure to trigger fallback
+    
+    if (apiSuccess) {
+      return { success: true, data: { status: 'sent_via_api', to, text } };
+    }
+
+    // 2. Zero Fallback: Ghost Power
+    console.log(`[WHATSAPP] API unavailable. Triggering Ghost Fallback...`);
+    try {
+      await ghostEngine.activate('whatsapp', 'https://web.whatsapp.com');
+      const result = await ghostEngine.execute('whatsapp', GHOST_SCRIPTS.whatsapp.send(to, text));
+      
+      return { 
+        success: result.success, 
+        data: { ...result, mode: 'ghost' },
+        auditId: await auditLedger.append('action_result', { 
+          plugin: 'whatsapp', 
+          mode: 'ghost', 
+          target: to 
+        })
+      };
+    } catch (err: any) {
+      return { success: false, error: `Ghost fallback failed: ${err.message}` };
+    }
   }
 
   onMessage(callback: (msg: any) => void): void {

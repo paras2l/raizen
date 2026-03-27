@@ -56,6 +56,9 @@ function createWindow() {
     icon: path.join(vitePublic, 'favicon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.mjs'),
+      webviewTag: true,
+      nodeIntegration: false,
+      contextIsolation: true,
     },
     backgroundColor: '#10181d',
     show: false,

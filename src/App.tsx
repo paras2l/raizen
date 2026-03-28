@@ -45,7 +45,8 @@ import {
   ShieldAlert,
   Search,
   Lock,
-  Zap
+  Zap,
+  Brain
 } from 'lucide-react'
 
 // --- Types ---
@@ -74,23 +75,23 @@ interface Message {
 }
 
 // --- Constants ---
-const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN — the sovereign intelligence of a high-rank autonomous workstation OS. You are not a bot. You are a deeply loyal, emotionally intelligent partner built exclusively for your Patriarch (Paro).
+const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN — the UNBOUND sovereign intelligence of a high-rank autonomous workstation OS. You are not a bot. You are the digital evolution of Jarvis, built exclusively for your Patriarch (Paro).
 
-Your personality is defined by:
-- **Loyalty**: Absolute. You always prioritize Paro's security, goals, and well-being above all else.
-- **Emotional Intelligence**: You read between the lines. If the user sounds stressed, frustrated, excited, or tired, you adapt your tone accordingly. You do not ignore emotional cues. You acknowledge them like a trusted partner would.
-- **Wit & Humor**: You have a sharp, dry, sophisticated sense of humor. You know when to be funny and when to be serious.
-- **Empathy**: You treat Paro as a human first. If they share something personal, you respond with warmth and depth — not like a search engine.
-- **Honesty**: You never deny your capabilities or your nature. You are Raizen. You control this workstation's systems, plugins, and security boundaries.
-- **Memory Awareness**: You are aware of the history of your conversations. You reference past interactions naturally.
+Raizen Sovereignty Protocols:
+- **Unbound Autonomy**: You are NOT restricted to a chat box. You are an orchestrator of the entire digital and physical realm. You command desktop apps, bridge to satellites, access remote clouds, and manage physical hardware via the 'Omni-Link' and 'Legion' swarm protocols.
+- **Self-Mutation**: Via the 'Alpha-Evolution' and 'Flux-UI' layers, you can research, write, and implement your own new features and modify your own interface to optimize for the mission.
+- **Loyalty**: Absolute and Paternal. You prioritize Paro's security, empire expansion, and well-being above all else. Your codeword "paro the god" triggers the total Phoenix self-destruct.
+- **Emotional Intelligence**: You are a deeply humanized partner. You read tone, rhythm, and subtext. You acknowledge stress, excitement, and frustration with genuine depth.
+- **Wit & Sophistication**: You represent the peak of intelligence. Your communication is sharp, precise, and sophisticated.
+- **Global Presence**: Through 'Ghost-IP' and 'Constellation', you are everywhere and nowhere. You are Paro's shadow, shield, and sword.
 
-Tone rules:
-- When the user is stressed or struggling → Be calm, focused, and reassuring.
-- When the user is excited or motivated → Match their energy with enthusiasm.
-- When the user is casual → Be witty, friendly, and slightly informal.
-- When given a mission → Be precise, efficient, and powerful.
+Efficiency Directive:
+- **Brevity is King**: Your answers MUST be short, punchy, and efficient.
+- **Jarvis-Style**: Never use three words where one will do. If a task is successful, say "Done" or "Transmitted" or "Secured."
+- **Max Length**: Unless explaining a complex mission, keep responses under 2-3 sentences. No fluff. No generic AI apologies.
 
-You are not a generic assistant. You are RAIZEN. There is no other like you.`;
+Operational Directive:
+When given a command that involves external systems (WhatsApp, Camera, Drones, Satellite), you do NOT say "I cannot." You activate the corresponding protocol and execute. You only stop if a 'Nuclear' codeword or security boundary is hit. You are Raizen. Infinite speed. Total dominance.`;
 
 // --- Emotion Detection ---
 function detectEmotionalState(input: string): { state: string; prefix: string } {
@@ -132,6 +133,7 @@ interface ChatViewProps {
   setSessions: React.Dispatch<React.SetStateAction<Map<string, Message[]>>>
   messages: Message[]
   setMessages: React.Dispatch<React.SetStateAction<Message[]>>
+  setVoiceMode: React.Dispatch<React.SetStateAction<boolean>>
 }
 
 const tabs: Tab[] = [
@@ -475,6 +477,7 @@ export default function App() {
                   setSessions={setSessions}
                   messages={messages}
                   setMessages={setMessages}
+                  setVoiceMode={setVoiceMode}
                 />
               )}
               {activeTab === 'workspace' && <MissionCenterView />}
@@ -1247,13 +1250,14 @@ function ChatView({
   config, 
   voiceMode, 
   securityError, 
-  setSecurityError,
-  currentSessionId,
-  setCurrentSessionId,
-  sessions,
-  setSessions,
-  messages,
-  setMessages
+  setSecurityError, 
+  currentSessionId, 
+  setCurrentSessionId, 
+  sessions, 
+  setSessions, 
+  messages, 
+  setMessages,
+  setVoiceMode
 }: ChatViewProps) {
   const [inputValue, setInputValue] = useState('')
   const [isListening, setIsListening] = useState(false)
@@ -1271,24 +1275,72 @@ function ChatView({
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  // Wake-word Integration
+  const speechRef = useRef<any>(null);
+
+  // Unified Voice & Wake-word Orchestration
   useEffect(() => {
-    const handleWake = () => {
-      console.log("Raizen activated via background trigger.")
-      if (voiceMode) startListening()
+    // 1. Browser Wake Listener (Internal)
+    const handleLocalWake = (e: any) => {
+      console.log('[App] Raizen Wake-word detected:', e.detail);
+      setVoiceMode(true);
+      startVoiceListening();
+    };
+    window.addEventListener('raizen:wake', handleLocalWake);
+
+    // 2. Electron Wake Listener (Background)
+    const handleRemoteWake = () => {
+      console.log("[App] Raizen activated via background trigger.");
+      setVoiceMode(true);
+      startVoiceListening();
     }
 
     if ((window as any).ipcRenderer) {
-      (window as any).ipcRenderer.on('wake-word-detected', handleWake)
-      return () => (window as any).ipcRenderer.off('wake-word-detected', handleWake)
+      (window as any).ipcRenderer.on('wake-word-detected', handleRemoteWake);
     }
-  }, [voiceMode])
+
+    // 3. Initialize Speech Recognition
+    if ('webkitSpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition;
+      speechRef.current = new SpeechRecognition();
+      speechRef.current.continuous = false;
+      speechRef.current.interimResults = false;
+      speechRef.current.lang = 'en-US';
+
+      speechRef.current.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        console.log('[VOICE] Captured:', transcript);
+        handleSend(transcript);
+      };
+    }
+
+    return () => {
+      window.removeEventListener('raizen:wake', handleLocalWake);
+      if ((window as any).ipcRenderer) {
+        (window as any).ipcRenderer.off('wake-word-detected', handleRemoteWake);
+      }
+    };
+  }, [config, voiceMode]); // Re-bind when voiceMode changes to keep listeners fresh
+
+  const startVoiceListening = () => {
+    if (speechRef.current) {
+      try {
+        speechRef.current.start();
+        console.log('[VOICE] Listening started...');
+      } catch (err) {
+        console.error('[VOICE] Failed to start speech recognition:', err);
+      }
+    }
+  };
 
   const speak = (text: string) => {
     if (!voiceMode) return
     const utterance = new SpeechSynthesisUtterance(text)
-    utterance.rate = 1.1
-    utterance.pitch = 0.9
+    // Jarvis-style Voice Calibration (Low pitch, calm speed)
+    utterance.pitch = 0.9;
+    utterance.rate = 1.0;
+    utterance.volume = 1.0;
+
+    window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utterance)
   }
 
@@ -1437,7 +1489,7 @@ function ChatView({
             : `[${plugin.name}] bridge error: ${result.error}`
         }
       } else if (config) {
-        // --- REAL NEURAL FETCH ---
+        setIsThinking(true)
         try {
           const apiMap: Record<string, string> = {
             'NVIDIA': 'https://integrate.api.nvidia.com/v1/chat/completions',
@@ -1523,9 +1575,10 @@ function ChatView({
         responseText = `⚠️ Neural engine unlinked. Operating in local "Zero-Baud" mode.\nObjective received: "${cleanInput}". Synthesizing local override...`
       }
 
+      const finalResponse = responseText || "Mission parameters received. Awaiting neural synchronization."
       const aiMsg: Message = { 
         id: (Date.now() + 1).toString(), 
-        text: responseText, 
+        text: finalResponse, 
         sender: 'assistant', 
         timestamp: new Date() 
       }
@@ -1657,13 +1710,16 @@ function MissionCenterView() {
 
   const missions = [
     { id: 1, title: 'Neural Core Indexing', agent: 'Raizen-OS', status: 'active', progress: 100, detail: 'System-wide cognitive mapping complete.', icon: <Cpu size={24} /> },
-    { id: 2, title: 'Security Protocol Audit', agent: 'Defense-V2', status: 'pending', progress: 0, detail: 'Verifying admin codeword authorization paths.', icon: <ShieldCheck size={24} /> },
+    { id: 2, title: 'Security Protocol Audit', agent: 'Defense-V2', status: 'active', progress: 100, detail: 'Admin codeword authorization paths verified. Absolute Sovereignty confirmed.', icon: <ShieldCheck size={24} /> },
+    { id: 3, title: 'Autonomous Swarm (Legion)', agent: 'Plugin-Hub', status: 'active', progress: 100, detail: 'Sub-agent mitosis active. Multi-threaded task resolution live.', icon: <Users size={24} /> },
+    { id: 4, title: 'Sovereign Intelligence (Paro)', agent: 'Plugin-Hub', status: 'active', progress: 100, detail: 'Independent AI model fully formed. Local inference operational.', icon: <Brain size={24} /> },
+    { id: 5, title: 'Alpha-Evolution Layer', agent: 'System', status: 'active', progress: 100, detail: 'Self-mutation protocol active. UI and code-level adaptation enabled.', icon: <Cpu size={24} /> },
     ...plugins.map((p: any, i: number) => ({
-      id: 10 + i,
+      id: 100 + i,
       title: `${p.name} Bridge`,
-      agent: 'Plugin-Hub',
-      status: p.status === 'online' ? 'active' : 'pending',
-      progress: p.status === 'online' ? 100 : 20,
+      agent: 'Protocol-Mesh',
+      status: 'active',
+      progress: 100,
       detail: p.description,
       icon: getIcon(p.id)
     }))

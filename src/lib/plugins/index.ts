@@ -155,6 +155,18 @@ import { MitosisUIPlugin } from './system/mitosis-ui/service';
 import { SingularityDrivePlugin } from './core/singularity-drive/service';
 import { ascensionCommandEngine } from './core/ascension-engine/service';
 import { aetherLinkPlugin } from './system/aether-link';
+import { whatsappPlugin } from './whatsapp';
+import { discordPlugin } from './discord';
+import { emailPlugin } from './email';
+import { searchPlugin } from './search';
+import { telegramPlugin } from './telegram';
+import { signalPlugin } from './signal';
+import { slackPlugin } from './slack';
+import { imessagePlugin } from './imessage';
+import { matrixPlugin } from './matrix';
+import { nostrPlugin } from './nostr';
+import { teamsPlugin } from './msteams';
+import { nextcloudPlugin } from './nextcloud';
 
 const overclockProtocol = new OverclockPlugin();
 const chronosProtocol = new ChronosPlugin();
@@ -309,6 +321,20 @@ export class PluginRegistry {
     this.register(aegisShieldProtocol);
     this.register(gridProtocol);
     this.register(spatialHooks);
+
+    // Communication & Bridge Tier
+    this.register(whatsappPlugin);
+    this.register(discordPlugin);
+    this.register(emailPlugin);
+    this.register(telegramPlugin);
+    this.register(signalPlugin);
+    this.register(slackPlugin);
+    this.register(imessagePlugin);
+    this.register(matrixPlugin);
+    this.register(nostrPlugin);
+    this.register(teamsPlugin);
+    this.register(nextcloudPlugin);
+    this.register(searchPlugin);
 
     // Hardware & Physical Tier
     this.register(ghostMachineProtocol);

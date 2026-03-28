@@ -77,7 +77,7 @@ function handleWakeActivation() {
 }
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {}
+  // Keep alive in tray for background listening
 })
 
 app.on('activate', () => {

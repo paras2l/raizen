@@ -1,5 +1,10 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { auditLedger } from '../../../governance';
+import { ActivityLedgerMonitor } from './activity-monitor';
+import { AttackVectorAnalyzer } from './attackVectorAnalyzer';
+import { DefensePatchGenerator } from './patch-generator';
+import { AttackVector, DefensePatch } from './types';
+import { SubAgentSentinel } from './subagent';
 
 /**
  * Guardian Protocol: Self-Evolving Defense
@@ -11,8 +16,13 @@ export class GuardianService implements RaizenPlugin {
   description = "God-Tier defense: Autonomously researches attack vectors and writes custom patches to block threats.";
   status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
 
-  private patchRegistry: Map<string, { date: string, type: string }> = new Map();
-  private threatintelCache: string[] = [];
+  // Security Engines
+  private monitor = new ActivityLedgerMonitor();
+  private analyzer = new AttackVectorAnalyzer();
+  private patcher = new DefensePatchGenerator();
+  
+  private patchRegistry: Map<string, DefensePatch> = new Map();
+  private threatintelCache: any[] = [];
 
   actions: PluginAction[] = [
     {
@@ -35,13 +45,21 @@ export class GuardianService implements RaizenPlugin {
       description: 'Get a report on current protection layers and recently applied patches.',
       category: 'system',
       sensitive: false
+    },
+    {
+      id: 'guardian-deploy-sentinel',
+      label: 'Deploy Sub-Agent Sentinel',
+      description: 'Spawns an autonomous guardian for a remote bridge or gate.',
+      category: 'security',
+      sensitive: true
     }
   ];
 
   async initialize(): Promise<void> {
     this.status = 'online';
     console.log('[GUARDIAN] Threat-intel bridge active. System: HARDENED.');
-    this.patchRegistry.set('CORE_RESTRICTION_WIPE', { date: new Date().toISOString(), type: 'POLICY_REMOVAL' });
+    // Initial monitor sweep
+    await this.monitor.trackProcess('RAIZEN_CORE_BOOT');
   }
 
   async execute(actionId: string, params: Record<string, any>): Promise<ActionResult> {
@@ -60,6 +78,9 @@ export class GuardianService implements RaizenPlugin {
           return await this.handlePatchGen(params, auditEntry.id);
         case 'get_protection_status':
           return this.handleStatus(auditEntry.id);
+        case 'guardian-deploy-sentinel':
+          const sentinel = new SubAgentSentinel(params.bridgeId || 'GLOBAL_GATE');
+          return { success: true, data: { status: 'DEPLOYED', sentinelId: sentinel.id }, auditId: auditEntry.id };
         default:
           return { success: false, error: 'Guardian access denied.', auditId: auditEntry.id };
       }
@@ -70,16 +91,18 @@ export class GuardianService implements RaizenPlugin {
 
   private async handleScan(auditId: string): Promise<ActionResult> {
     console.log('[GUARDIAN] Running multi-layer vulnerability audit...');
-    // Deep simulation of vulnerability scanning
-    const vectors = ['Socket_Leak_0x01', 'Memory_Injection_Stubs'];
-    this.threatintelCache = vectors;
+    await this.monitor.trackNetwork('HUB_01', 1024);
+    
+    // Use the analyzer to research a specific phantom threat
+    const threat = await this.analyzer.analyze('ANOMALY_X');
+    this.threatintelCache.push(threat);
 
     return { 
       success: true, 
       data: { 
         status: 'SURVEY_COMPLETE', 
-        threatsFound: vectors.length,
-        vulnerabilities: vectors,
+        threatsFound: 1,
+        vulnerabilities: [threat],
         hardeningScore: 0.99 
       }, 
       auditId 
@@ -87,19 +110,17 @@ export class GuardianService implements RaizenPlugin {
   }
 
   private async handlePatchGen(params: Record<string, any>, auditId: string): Promise<ActionResult> {
-    const vector = params.vector || 'GENERIC_INJECTION';
+    const vector = (params.vector as AttackVector) || 'malware';
     console.log(`[GUARDIAN] Researching defense for: ${vector}`);
     
-    // Deep simulation of patch generation
-    const patchId = `PAT_${Math.random().toString(16).slice(2, 6)}`;
-    this.patchRegistry.set(patchId, { date: new Date().toISOString(), type: 'ZERODAY_BLOCK' });
+    // Generate the autonomous patch
+    const patch = this.patcher.generate(vector);
+    this.patchRegistry.set(patch.id, patch);
 
     return { 
       success: true, 
       data: { 
-        patchId, 
-        vectorBlocked: vector, 
-        efficiency: 'MAXIMUM',
+        patch,
         status: 'DEPLOYED' 
       }, 
       auditId 
@@ -110,7 +131,7 @@ export class GuardianService implements RaizenPlugin {
     return { 
       success: true, 
       data: { 
-        activePatches: Array.from(this.patchRegistry.entries()),
+        activePatches: Array.from(this.patchRegistry.values()),
         intelCacheSize: this.threatintelCache.length,
         shieldIntegrity: 1.0,
         status: 'INVINCIBLE'

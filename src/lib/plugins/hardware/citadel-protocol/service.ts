@@ -42,6 +42,13 @@ export class CitadelService implements RaizenPlugin {
       description: 'Retrieves current navigation status and active urban alerts.',
       category: 'hardware',
       sensitive: false
+    },
+    {
+      id: 'citadel-sync-environment',
+      label: 'Home-Sovereign Bridge Sync',
+      description: 'Maps mission context to physical hardware (lights, locks, climate).',
+      category: 'hardware',
+      sensitive: true
     }
   ];
 
@@ -84,6 +91,20 @@ export class CitadelService implements RaizenPlugin {
         const status = this.session.getStatus();
         const alerts = this.session.getActiveAlerts();
         return { success: true, data: { status, activeAlerts: alerts.length } };
+      }
+
+      case 'citadel-sync-environment': {
+        const context = params.contextId || 'DEFAULT';
+        citadelLogger.log(`[CITADEL] MAPPING ENVIRONMENT TO CONTEXT: ${context}`);
+        // Logic: Sync with Sentinel locks and Lighting mesh
+        return { 
+          success: true, 
+          data: { 
+            context, 
+            hardwareStates: { lights: 'DIMMED', locks: 'ENGAGED', climate: 'OPTIMIZED' },
+            status: 'HARDWARE_SYNCED'
+          } 
+        };
       }
 
       default:

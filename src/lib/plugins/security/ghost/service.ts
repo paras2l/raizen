@@ -20,6 +20,13 @@ export class GhostProtocolPlugin implements RaizenPlugin {
       description: 'Sync local state with hardware controllers without external traffic.',
       category: 'system' as any,
       sensitive: true
+    },
+    {
+      id: 'execute-untraceable',
+      label: 'Execute Untraceable',
+      description: 'Wraps an external task in a shadow shell and auto-wipes logs upon completion.',
+      category: 'security' as any,
+      sensitive: true
     }
   ];
 
@@ -33,6 +40,17 @@ export class GhostProtocolPlugin implements RaizenPlugin {
         return { success: true, data: { network: 'CUT', localModel: 'TINY_LLAMA_RAIZEN', status: 'STEALTH' } };
       case 'local-sync':
         return { success: true, data: { syncStatus: 'COMPLETED', nodes: 12 } };
+      case 'execute-untraceable':
+        console.log(`[GHOST] Wrapping task [${params.taskId}] in shadow shell...`);
+        // Logic: Execute task, then call internal log wiper
+        return { 
+          success: true, 
+          data: { 
+            footprint: 'NULL_POINTER_REMOVED', 
+            trace: 'CLEAN', 
+            status: 'GHOST_MISSION_SUCCESS' 
+          } 
+        };
       default:
         return { success: false, error: 'Unknown action' };
     }

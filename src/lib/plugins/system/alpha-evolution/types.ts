@@ -13,7 +13,9 @@ export interface ModuleMetadata {
   name: string;
   version: string;
   author: 'Raizen';
-  basePath: string;
+  path: string;
+  stability: number;
+  implantedAt: Date;
   permissions: string[];
 }
 

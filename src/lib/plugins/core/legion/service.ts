@@ -45,3 +45,5 @@ export class LegionPlugin implements RaizenPlugin {
     }
   }
 }
+
+export const legionCore = new LegionPlugin();

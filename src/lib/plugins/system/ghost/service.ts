@@ -1,5 +1,8 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { auditLedger } from '../../../governance';
+import { LocalModelManager } from './model-manager';
+import { OfflineModeController } from './mode-controller';
+import { RecoverySynchronizer } from './sync-engine';
 
 /**
  * Ghost Protocol: Local-Only Offline Autonomy
@@ -9,9 +12,12 @@ export class GhostProtocolService implements RaizenPlugin {
   id = 'system.ghost';
   name = "Local-Only Offline Autonomy (The Ghost Protocol)";
   description = "God-Tier autonomy: A 'Dark Mode' for Raizen. If internet fails, a localized model manages your entire infrastructure.";
-  status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
+  status: 'offline' | 'connecting' | 'online' | 'error' = 'online';
 
-  private connectivityState: 'ONLINE' | 'GHOST_MODE' = 'ONLINE';
+  private modelManager = new LocalModelManager();
+  private modeController = new OfflineModeController();
+  private syncEngine = new RecoverySynchronizer();
+
   private localModelUptime: number = 0;
 
   actions: PluginAction[] = [
@@ -35,6 +41,13 @@ export class GhostProtocolService implements RaizenPlugin {
       description: 'Get a report on current local model performance and offline task queue.',
       category: 'system',
       sensitive: false
+    },
+    {
+       id: 'local_infer',
+       label: 'Local Inference',
+       description: 'Process a command entirely offline using the local Paro model.',
+       category: 'intelligence' as any,
+       sensitive: false
     }
   ];
 
@@ -48,7 +61,7 @@ export class GhostProtocolService implements RaizenPlugin {
       pluginId: this.id, 
       actionId, 
       params,
-      connection: this.connectivityState
+      connection: this.modeController.getMode()
     });
 
     try {
@@ -59,6 +72,8 @@ export class GhostProtocolService implements RaizenPlugin {
           return await this.handleReconnection(auditEntry.id);
         case 'get_ghost_report':
           return this.handleReport(auditEntry.id);
+        case 'local_infer':
+           return await this.handleLocalInfer(params, auditEntry.id);
         default:
           return { success: false, error: 'Ghost bridge disrupted.', auditId: auditEntry.id };
       }
@@ -69,15 +84,17 @@ export class GhostProtocolService implements RaizenPlugin {
 
   private async handleGhostActivation(auditId: string): Promise<ActionResult> {
     console.warn('[GHOST] SEVERING EXTERNAL LINKS. SWITCHING TO LOCAL AUTONOMY...');
-    this.connectivityState = 'GHOST_MODE';
+    this.modeController.activate();
     this.localModelUptime = Date.now();
+    await this.modelManager.loadModel('PARO_TINY_7B_GGUF');
     
     return { 
       success: true, 
       data: { 
         status: 'DARK_MODE_ACTIVE', 
         internetRequirement: '0%', 
-        localCapacity: 'OPTIMAL' 
+        localCapacity: 'OPTIMAL',
+        model: 'Paro-Tiny-7B'
       }, 
       auditId 
     };
@@ -85,20 +102,45 @@ export class GhostProtocolService implements RaizenPlugin {
 
   private async handleReconnection(auditId: string): Promise<ActionResult> {
     console.log('[GHOST] RESTORING EXTERNAL SYNC...');
-    this.connectivityState = 'ONLINE';
-    return { success: true, data: { status: 'ONLINE_SYNC_RECOVERY' }, auditId };
+    this.modeController.deactivate();
+    const syncedCount = await this.syncEngine.syncAll();
+    
+    return { 
+       success: true, 
+       data: { 
+         status: 'ONLINE_SYNC_RECOVERY', 
+         syncedDeltas: syncedCount 
+       }, 
+       auditId 
+    };
   }
 
   private handleReport(auditId: string): ActionResult {
     return { 
       success: true, 
       data: { 
-        mode: this.connectivityState,
-        offlineTime: this.connectivityState === 'GHOST_MODE' ? `${Math.round((Date.now() - this.localModelUptime)/1000)}s` : '0s',
-        capabilities: ['SmartHome', 'FileMgt', 'BasicInference']
+        mode: this.modeController.getMode(),
+        offlineTime: this.modeController.getMode() === 'AUTONOMOUS' ? `${Math.round((Date.now() - this.localModelUptime)/1000)}s` : '0s',
+        capabilities: ['SmartHome', 'FileMgt', 'LocalInference']
       }, 
       auditId 
     };
+  }
+
+  private async handleLocalInfer(params: Record<string, any>, auditId: string): Promise<ActionResult> {
+     const { prompt } = params;
+     const response = await this.modelManager.infer(prompt);
+     this.syncEngine.recordDelta('local_infer', { prompt, response });
+     
+     return {
+        success: true,
+        data: {
+           response,
+           engine: 'LOCAL_PARO_GHOST',
+           shroud: 'ACTIVE'
+        },
+        auditId
+     };
   }
 }
 

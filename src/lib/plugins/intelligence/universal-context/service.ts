@@ -1,5 +1,10 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { auditLedger } from '../../../governance';
+import { ContextDetector } from './detector';
+import { KnowledgeRetriever } from './retriever';
+import { ContextInjector } from './injector';
+import { ContextSynthesizer } from './synthesizer';
+import { contextLogger } from './logger';
 
 /**
  * Universal Context Injection
@@ -8,11 +13,16 @@ import { auditLedger } from '../../../governance';
 export class UniversalContextService implements RaizenPlugin {
   id = 'intelligence.universal_context';
   name = "Universal Context Injection";
-  description = "God-Tier context: Instantly 'knows' the context of any room, book, or conversation by cross-referencing global data.";
+  description = "God-Tier context: Instantly 'know' the context of any room, book, or conversation by cross-referencing global data.";
   status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
 
+  private detector = new ContextDetector();
+  private retriever = new KnowledgeRetriever();
+  private injector = new ContextInjector();
+  private synthesizer = new ContextSynthesizer();
+
   private activeContext: Map<string, any> = new Map();
-  private globalPulse: number = 0.94;
+  private globalPulse: number = 0.98;
 
   actions: PluginAction[] = [
     {
@@ -68,32 +78,51 @@ export class UniversalContextService implements RaizenPlugin {
   }
 
   private async handleInjection(params: Record<string, any>, auditId: string): Promise<ActionResult> {
-    const target = params.target || 'UNKNOWN_NODE';
-    console.log(`[CONTEXT] Injecting global data for: ${target}`);
+    const input = params.target || params.input || 'GENERAL_SITUATION';
+    console.log(`[CONTEXT] Decomposing semantic intent for: ${input}`);
     
-    this.activeContext.set(target, { type: 'GLOBAL_KNOWLEDGE', confidence: 0.99 });
+    // 1. Detect Intent/Subject
+    const detection = this.detector.detect(input);
+    contextLogger.log({ event: 'DETECT', details: `Subject: ${detection.subject}, Type: ${detection.type}` });
+
+    // 2. Retrieve Global Facts
+    const knowledge = await this.retriever.fetch(detection.subject, ['web_api', 'research_db', 'local_memory']);
+    contextLogger.log({ event: 'RETRIEVE', details: `Found ${knowledge.length} knowledge segments.` });
+
+    // 3. Synthesize Snapshot
+    const snapshot = this.synthesizer.synthesize(detection.subject, detection.type, knowledge);
+    contextLogger.log({ event: 'SYNTHESIZE', details: `Snapshot ${snapshot.id} generated.` });
+
+    // 4. Inject into Payload
+    const payload = this.injector.inject(snapshot);
+    this.activeContext.set(snapshot.id, snapshot);
+    contextLogger.log({ event: 'INJECT', details: `Context injected with ${payload.priority} priority.` });
 
     return { 
       success: true, 
       data: { 
-        injectedNodes: 4, 
-        source: 'GLOBAL_DATA_MESH',
-        contextDepth: 'MAXIMUM' 
+        snapshot,
+        payload,
+        status: 'GLOBAL_SYNC_COMPLETE'
       }, 
       auditId 
     };
   }
 
   private async handleSensing(auditId: string): Promise<ActionResult> {
-    console.log('[CONTEXT] Activating reality sensors...');
-    const findings = ['Room: Office', 'Noise: Low', 'People: 1'];
+    console.log('[CONTEXT] Activating reality sensors for multi-modal ingestion...');
     
-    findings.forEach(f => this.activeContext.set(`physical_${f}`, { type: 'SENSOR_DATA' }));
+    // Simulating hardware sensor capture
+    const sensorFindings = ['Physical: Office Environment', 'Acoustic: Strategic Sync Detected', 'GPS: Sovereign HQ'];
+    
+    sensorFindings.forEach(f => {
+      this.activeContext.set(`sensing_${Date.now()}`, { type: 'SENSOR_DATA', val: f });
+    });
 
     return { 
       success: true, 
       data: { 
-        sensoryInput: findings, 
+        sensoryInput: sensorFindings, 
         privacyStatus: 'ENCRYPTED_STREAM',
         status: 'AWARE' 
       }, 
@@ -105,8 +134,9 @@ export class UniversalContextService implements RaizenPlugin {
     return { 
       success: true, 
       data: { 
-        activeNodes: Array.from(this.activeContext.keys()),
-        meshHealth: '100%_SYNCHRONIZED'
+        activeNodes: Array.from(this.activeContext.values()),
+        meshHealth: '100%_SYNCHRONIZED',
+        globalPulse: this.globalPulse
       }, 
       auditId 
     };

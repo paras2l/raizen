@@ -13,6 +13,14 @@ export const searchPlugin: RaizenPlugin = {
       category: 'intelligence',
       sensitive: false,
       icon: 'Search'
+    },
+    {
+      id: 'browse',
+      label: 'Open in Browser',
+      description: 'Open a URL in the system default browser.',
+      category: 'intelligence',
+      sensitive: false,
+      icon: 'ExternalLink'
     }
   ],
   initialize: async () => {
@@ -65,6 +73,14 @@ export const searchPlugin: RaizenPlugin = {
       } catch (error: any) {
         return { success: false, error: `Search Error: ${error.message}` };
       }
+    }
+    if (actionId === 'browse') {
+      const url = params.url || `https://www.google.com/search?q=${encodeURIComponent(params.query || '')}`;
+      if ((window as any).ipcRenderer) {
+        await (window as any).ipcRenderer.invoke('system:open-url', url);
+        return { success: true, data: { status: 'opened', url } };
+      }
+      return { success: false, error: 'System bridge unavailable.' };
     }
     return { success: false, error: 'Unknown action' };
   }

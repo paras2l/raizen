@@ -36,6 +36,20 @@ export class SpatialHudPlugin implements RaizenPlugin {
       description: 'Toggle HUD visibility or switch between "Combat", "Research", and "Social" modes.',
       category: 'creative',
       sensitive: false
+    },
+    {
+      id: 'push_to_ar',
+      label: 'Push AR Overlay',
+      description: 'Formats and streams Jarvis-style data overlays to XR glasses.',
+      category: 'creative',
+      sensitive: true
+    },
+    {
+      id: 'set_jarvis_mode',
+      label: 'Enable Jarvis HUD',
+      description: 'Activates high-depth spatial data visualizers.',
+      category: 'creative',
+      sensitive: false
     }
   ];
 
@@ -58,6 +72,15 @@ export class SpatialHudPlugin implements RaizenPlugin {
         return this.updateTelemetry(params, auditEntry.id);
       case 'set_ui_state':
         return { success: true, data: { mode: params.mode || 'standard' }, auditId: auditEntry.id };
+      case 'push_to_ar':
+        console.log(`[SPATIAL-HUD] STREAMING JARVIS DATA TO AR: ${params.dataId}`);
+        return { 
+          success: true, 
+          data: { status: 'HUD_STREAMING', devices: 1, protocol: 'AETHER_XR' }, 
+          auditId: auditEntry.id 
+        };
+      case 'set_jarvis_mode':
+        return { success: true, data: { visualizer: 'HYPER_DEPTH', alerts: 'ACTIVE' }, auditId: auditEntry.id };
       default:
         return { success: false, error: 'Unknown action.', auditId: auditEntry.id };
     }

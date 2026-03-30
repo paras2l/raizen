@@ -6,6 +6,11 @@ import { mimicProtocol } from './intelligence/mimic/service';
 import { sentientCode } from './system/sentient-code/service';
 import { universalContext } from './intelligence/universal-context/service';
 import { cognitiveMirroring } from './intelligence/cognitive-mirroring/service';
+import { personaEngine } from './intelligence/persona-engine/service';
+import { vectorSync } from './intelligence/vector-sync/service';
+import { skillSynthesis } from './intelligence/skill-synthesis/service';
+import { orchestratorPlugin } from './system/orchestrator/service';
+import { cyclopsVision } from './vision/cyclops/service';
 import { recursiveImprovement } from './intelligence/recursive-improvement/service';
 import { alphaEvolution } from './system/alpha-evolution/service';
 import { immuneSystem } from './system/immune/service';
@@ -34,8 +39,11 @@ import { voyagerProtocol } from './system/voyager/service';
 import { titanLayer } from './social/titan/service';
 import { parallelEngine } from './intelligence/parallel/service';
 import { sixthSense } from './intelligence/sixth-sense/service';
+import { overclockPlugin } from './system/overclock/service';
 import { starLinkProtocol } from './neural/starlink/service';
 import { mirageEngine } from './creative/mirage/service';
+import { fluxUI } from './ui/flux/service';
+import { FluxUIPlugin } from './system/flux-ui/service';
 import { digitizerProtocol } from './creative/digitizer-protocol/service';
 import { guardianProtocol } from './security/guardian/service';
 import { silencerProtocol } from './security/silencer/service';
@@ -52,12 +60,19 @@ import { prismProtocol } from './security/prism/service';
 import { recallProtocol } from './security/recall/service';
 import { nervanaShield } from './cosmic/nervana/service';
 import { phantomProtocol } from './security/phantom/service';
-import { lifeLineProtocol } from './system/life-line/service';
+import { lifeLineProtocol } from './health/life-line/service';
+import { anchorProtocol } from './security/anchor/service';
+import { mirageMesh } from './security/mirage-mesh/service';
+import { neuralFirewall } from './security/neural-firewall/service';
+import { atomicShredding } from './security/atomic-shredding/service';
 import { passportProtocol } from './system/passport/service';
 import { phantomDrive } from './system/phantom/service';
 import { originKey } from './security/origin/service';
-import { honeySwarm } from './security/honey-swarm/service';
 import { voidProtocol } from './security/void/service';
+import { honeySwarm } from './security/honey-swarm/service';
+import { nativeBridgePlugin } from './system/native-bridge';
+import { echoPlugin } from './communication/echo';
+import { phoneControlPlugin } from './mobile/phone-control';
 import { untisCore } from './system/untis/service';
 import { chimeraProtocol } from './security/chimera/service';
 import { godCodeAuth } from './security/god-code/service';
@@ -69,16 +84,13 @@ import { overlordProtocol } from './intelligence/overlord/service';
 import { hyperionProtocol } from './system/hyperion/service';
 import { teslaProtocol } from './hardware/tesla/service';
 import { aegisLink } from './security/aegis-link/service';
-import { mirageMesh } from './security/mirage-mesh/service';
-import { neuralFirewall } from './security/neural-firewall/service';
-import { atomicShredding } from './security/atomic-shredding/service';
 import { quantumTether } from './security/quantum-tether/service';
 import { ghostIPProtocol } from './security/ghost-ip/service';
 import { legalStrike } from './security/legal-strike/service';
 import { hardcodeProtocol } from './security/hardcode/service';
 import { vaultProtocol } from './security/vault/service';
-import { nexusLayer } from './system/nexus/service';
 import { ghostProtocol } from './system/ghost/service';
+import { nexusLayer } from './system/nexus/service';
 import { ghostWriter } from './social/ghost-writer/service';
 import { avatarProtocol } from './social/avatar/service';
 import { authorityEngine } from './social/authority/service';
@@ -99,6 +111,9 @@ import { sovereignLayer } from './social/sovereign-layer/service';
 import { innerCircle } from './social/inner-circle/service';
 import { shadowProtocol } from './social/shadow/service';
 import { homeAssistant } from './system/home-assistant/service';
+import { memoryHarvest } from './intelligence/memory-harvest/service';
+import { predictiveIntelligence } from './intelligence/predictive/service';
+import { hyperInference } from './intelligence/hyper-inference/service';
 import { spatialHooks } from './creative/spatial-hooks/service';
 import { neuralLinkService } from './intelligence/neural-link/service';
 import { ghostMachineProtocol } from './hardware/ghost-machine/service';
@@ -123,7 +138,6 @@ import { sovereignCommand } from './system/sovereign/service';
 import { bardProtocol } from './creative/bard/service';
 import { catalystProtocol } from './intelligence/catalyst/service';
 import { paladinProtocol } from './security/paladin/service';
-import { anchorProtocol } from './security/anchor/service';
 import { sanctuaryProtocol } from './security/sanctuary/service';
 import { trueBornProtocol } from './security/true-born/service';
 import { apexProtocol } from './system/apex/service';
@@ -144,14 +158,19 @@ import { serenityProtocol } from './health/serenity/service';
 import { elysiumProtocol } from './security/elysium/service';
 import { singularityCore } from './core/singularity-core';
 import { rccrBrain } from './core/rccr-brain';
+import { existentialAlignment } from './core/alignment/service';
+import { legionCore } from './core/legion/service';
+import { paroCore } from './core/paro/service';
 import { perceptionEngine } from './vision/perception-engine';
 import { ghostMesh } from './network/ghost-mesh';
 import { hudRenderer } from './spatial/hud-renderer';
+import { spatialHudPlugin } from './ui/spatial-hud';
 import { OverclockPlugin } from './system/overclock/service';
 import { ChronosPlugin } from './system/chronos/service';
-import { FluxUIPlugin } from './system/flux-ui/service';
 import { ConstellationPlugin } from './system/constellation/service';
+import { ScholarPlugin } from './system/scholar/service';
 import { MitosisUIPlugin } from './system/mitosis-ui/service';
+import { SustainPlugin } from './system/sustain/service';
 import { SingularityDrivePlugin } from './core/singularity-drive/service';
 import { ascensionCommandEngine } from './core/ascension-engine/service';
 import { aetherLinkPlugin } from './system/aether-link';
@@ -167,13 +186,45 @@ import { matrixPlugin } from './matrix';
 import { nostrPlugin } from './nostr';
 import { teamsPlugin } from './msteams';
 import { nextcloudPlugin } from './nextcloud';
+import { UnityP2PPlugin } from './communication/unity-mesh/service';
+    // this.register(phoneControlPlugin); // Already registered above at line 337
+import { proSearchPlugin } from './search/pro';
+import { predictiveIntel } from './core/predictive/service';
+import { liveCanvasPlugin } from './ui/canvas';
+import { openProsePlugin } from './system/prose';
+import { openCodePlugin } from './system/code';
+import { XRHooksPlugin } from './spatial/xr-hooks/service';
+import { outreach } from './social/outreach/service';
+import { reputationShield as socialReputation } from './social/reputation/service';
+import { ledger as socialLedger } from './social/ledger/service';
+import { VoidJammingPlugin } from './security/void-jamming/service';
+import { aiAdaptersPlugin } from './intelligence/adapters';
+import { acpBridgePlugin } from './intelligence/bridge';
+import { contextInjectionPlugin } from './intelligence/context-injection';
+import { coreSoulPlugin } from './intelligence/core-soul';
+import { inferencePlugin } from './intelligence/inference';
+import { miragePlugin } from './intelligence/mirage';
+import { mirroringPlugin } from './intelligence/mirroring';
+import { openShellPlugin } from './intelligence/openshell';
+import { selfImprovementPlugin } from './intelligence/self-improvement';
+import { syntheticPlugin } from './intelligence/synthetic';
+import { threadOwnershipPlugin } from './intelligence/thread-ownership';
+import { AnchorPrivacyPlugin } from './security/anchor-privacy/service';
+
+const anchorPrivacyPlugin = new AnchorPrivacyPlugin();
+
+
+
+const systemFlux = new FluxUIPlugin();
 
 const overclockProtocol = new OverclockPlugin();
 const chronosProtocol = new ChronosPlugin();
-const fluxUI = new FluxUIPlugin();
 const constellation = new ConstellationPlugin();
 const mitosisUI = new MitosisUIPlugin();
+const sustainProtocol = new SustainPlugin();
 const singularityDrive = new SingularityDrivePlugin();
+const xrHooks = new XRHooksPlugin();
+const voidJamming = new VoidJammingPlugin();
 
 import { RaizenPlugin } from './types';
 
@@ -196,12 +247,26 @@ export class PluginRegistry {
     // Intelligence Tier
     this.register(legionProtocol);
     this.register(paroModel);
+    this.register(memoryHarvest);
+    this.register(predictiveIntelligence);
+    this.register(hyperInference);
     this.register(akashaProtocol);
     this.register(scholarProtocol);
     this.register(oracleCore);
     this.register(mimicProtocol);
     this.register(universalContext);
     this.register(cognitiveMirroring);
+    this.register(personaEngine);
+    this.register(vectorSync);
+    this.register(skillSynthesis);
+    this.register(orchestratorPlugin);
+    this.register(cyclopsVision);
+    this.register(akashaProtocol);
+    this.register(hardcodeProtocol);
+    this.register(vaultProtocol);
+    this.register(ghostProtocol);
+    this.register(sixthSense);
+    this.register(overclockPlugin);
     this.register(recursiveImprovement);
     this.register(babelProtocol);
     this.register(sixthSense);
@@ -229,6 +294,7 @@ export class PluginRegistry {
     this.register(planetaryMesh);
     this.register(eternalOrbit);
     this.register(artisanProtocol);
+    this.register(mirageEngine);
 
     // Singularity Tier (Absolute Sovereignty)
     this.register(phoenixSingularity);
@@ -247,6 +313,11 @@ export class PluginRegistry {
     this.register(sanctuaryProtocol);
     this.register(trueBornProtocol);
     this.register(apexProtocol);
+    this.register(existentialAlignment);
+    this.register(singularityCore);
+    this.register(rccrBrain);
+    this.register(legionCore);
+    this.register(paroCore);
     this.register(phoenixOmegaProtocol);
     this.register(neutralityCheck);
     this.register(untisCore);
@@ -261,8 +332,9 @@ export class PluginRegistry {
     this.register(ghostIPProtocol);
     this.register(legalStrike);
     this.register(hardcodeProtocol);
-    this.register(phantomProtocol);
-    this.register(vaultProtocol);
+    this.register(nativeBridgePlugin);
+    this.register(echoPlugin);
+    this.register(phoneControlPlugin);
     this.register(nexusLayer);
 
     // Social & Architect Tier
@@ -302,8 +374,10 @@ export class PluginRegistry {
     this.register(overclockProtocol);
     this.register(chronosProtocol);
     this.register(fluxUI);
+    this.register(systemFlux);
     this.register(constellation);
     this.register(mitosisUI);
+    this.register(sustainProtocol);
     this.register(singularityDrive);
     
     // Creative & Spatial Tier
@@ -321,11 +395,13 @@ export class PluginRegistry {
     this.register(aegisShieldProtocol);
     this.register(gridProtocol);
     this.register(spatialHooks);
+    this.register(spatialHudPlugin);
 
     // Communication & Bridge Tier
     this.register(whatsappPlugin);
     this.register(discordPlugin);
     this.register(emailPlugin);
+    this.register(searchPlugin);
     this.register(telegramPlugin);
     this.register(signalPlugin);
     this.register(slackPlugin);
@@ -333,6 +409,20 @@ export class PluginRegistry {
     this.register(matrixPlugin);
     this.register(nostrPlugin);
     this.register(teamsPlugin);
+    this.register(anchorProtocol);
+    this.register(mirageMesh);
+    this.register(neuralFirewall);
+    this.register(atomicShredding);
+    this.register(overclockProtocol);
+    this.register(chronosProtocol);
+    this.register(eternalProtocol);
+    this.register(parallelEngine);
+    this.register(constellation);
+    this.register(originKey);
+    this.register(voidProtocol);
+    this.register(honeySwarm);
+    this.register(new ScholarPlugin());
+    this.register(mitosisUI);
     this.register(nextcloudPlugin);
     this.register(searchPlugin);
 
@@ -343,6 +433,7 @@ export class PluginRegistry {
     this.register(vanguardDrone);
     this.register(helaProtocol);
     this.register(rootProtocol);
+    this.register(aegisLink);
     this.register(lensProtocol);
     this.register(zoneProtocol);
     this.register(sentinelArray);
@@ -352,7 +443,10 @@ export class PluginRegistry {
 
     // Industrial Tier
     this.register(forgeProtocol);
+    this.register(teslaLayer);
+    this.register(gaiaProtocol);
     this.register(gaiaXProtocol);
+    this.register(centurionProtocol);
     
     // Cosmic Tier
     this.register(pioneerScan);
@@ -376,6 +470,57 @@ export class PluginRegistry {
     this.register(hudRenderer);
     this.register(ascensionCommandEngine);
     this.register(aetherLinkPlugin);
+    this.register(homeAssistant);
+    this.register(digitizerProtocol);
+    this.register(predictiveIntel);
+    this.register(nervanaShield);
+    this.register(pioneerScan);
+    this.register(bardProtocol);
+    this.register(codeSmithProtocol);
+    this.register(directorProtocol);
+    this.register(dreamReelProtocol);
+    this.register(duetProtocol);
+    this.register(echoProtocol);
+    this.register(illusionistLayer);
+    this.register(maestroEngine);
+    this.register(mirageEngine);
+    this.register(mythmakerEngine);
+    this.register(physicaEngine);
+    this.register(spatialHooks);
+    this.register(teslaProtocol);
+    this.register(lifeLineProtocol);
+    this.register(ghostNodeProtocol);
+    this.register(gridProtocol);
+    this.register(nexusProtocol);
+    this.register(searchPlugin);
+    this.register(systemFlux);
+    this.register(mitosisUI);
+    this.register(spatialHudPlugin);
+    this.register(sustainProtocol);
+    this.register(liveCanvasPlugin);
+    this.register(openProsePlugin);
+    this.register(openCodePlugin);
+    
+    // Extended Protocols
+    this.register(new UnityP2PPlugin());
+    this.register(proSearchPlugin);
+    this.register(xrHooks);
+    this.register(outreach);
+    this.register(socialReputation);
+    this.register(socialLedger);
+    this.register(voidJamming);
+    this.register(aiAdaptersPlugin);
+    this.register(acpBridgePlugin);
+    this.register(contextInjectionPlugin);
+    this.register(coreSoulPlugin);
+    this.register(inferencePlugin);
+    this.register(miragePlugin);
+    this.register(mirroringPlugin);
+    this.register(openShellPlugin);
+    this.register(selfImprovementPlugin);
+    this.register(syntheticPlugin);
+    this.register(threadOwnershipPlugin);
+    this.register(anchorPrivacyPlugin);
   }
 
   private register(plugin: RaizenPlugin) {
@@ -426,3 +571,148 @@ export class PluginRegistry {
 }
 
 export const pluginRegistry = PluginRegistry.getInstance();
+
+export {
+  neuralFirewall,
+  atomicShredding,
+  quantumTether,
+  ghostIPProtocol,
+  legalStrike,
+  ghostWriter,
+  avatarProtocol,
+  authorityEngine,
+  socialGraphEngine,
+  closerProtocol,
+  edgeEngine,
+  chameleonProtocol,
+  trustProtocol,
+  legacyLedger,
+  reputationShield,
+  networkingProtocol,
+  languageBridge,
+  diplomatProtocol,
+  jurisdictionAdvisor,
+  empireProtocol,
+  hypeEngine,
+  sovereignLayer,
+  innerCircle,
+  shadowProtocol,
+  neuralLinkService,
+  starProtocol,
+  ghostMachineProtocol,
+  lensProtocol,
+  zoneProtocol,
+  sentinelArray,
+  citadelProtocol,
+  vitalProtocol,
+  forgeProtocol,
+  predictiveIntel,
+  nervanaShield,
+  pioneerScan,
+  bardProtocol,
+  codeSmithProtocol,
+  digitizerProtocol,
+  directorProtocol,
+  dreamReelProtocol,
+  duetProtocol,
+  echoProtocol,
+  illusionistLayer,
+  maestroEngine,
+  mirageEngine,
+  mythmakerEngine,
+  physicaEngine,
+  spatialHooks,
+  keysToTheCity,
+  vanguardDrone,
+  helaProtocol,
+  rootProtocol,
+  sentinelSwarm,
+  teslaProtocol,
+  centurionProtocol,
+  irisScan,
+  lifeLineProtocol,
+  serenityProtocol,
+  gaiaProtocol,
+  gaiaXProtocol,
+  teslaLayer,
+  ghostNodeProtocol,
+  gridProtocol,
+  nexusProtocol,
+  ghostMesh,
+  searchPlugin,
+  cyclopsVision,
+  perceptionEngine,
+  systemFlux,
+  mitosisUI,
+  liveCanvasPlugin,
+  spatialHudPlugin,
+  personaEngine,
+  vectorSync,
+  sustainProtocol,
+  openProsePlugin,
+  orchestratorPlugin,
+  openCodePlugin,
+  aetherLinkPlugin,
+  voidProtocol,
+  untisCore,
+  unityProtocol,
+  sovereignCommand,
+  sentientCode,
+  scholarProtocol,
+  phoenixOmegaProtocol,
+  phantomProtocol,
+  phantomDrive,
+  passportProtocol,
+  overclockProtocol,
+  neutralityCheck,
+  mirageMesh,
+  immuneSystem,
+  hyperionProtocol,
+  homeAssistant,
+  godStateProtocol,
+  ghostProtocol,
+  eternalProtocol,
+  constellation,
+  chronosProtocol,
+  babelProtocol,
+  apexProtocol,
+  anchorProtocol,
+  alphaEvolution,
+  xrHooks,
+  outreach,
+  socialReputation,
+  socialLedger,
+  voidJamming,
+  aiAdaptersPlugin,
+  acpBridgePlugin,
+  contextInjectionPlugin,
+  coreSoulPlugin,
+  inferencePlugin,
+  miragePlugin,
+  mirroringPlugin,
+  openShellPlugin,
+  selfImprovementPlugin,
+  syntheticPlugin,
+  threadOwnershipPlugin,
+  anchorPrivacyPlugin,
+  mirageGrid,
+  sixthSense,
+  hudRenderer,
+  titanLayer,
+  strategistProtocol,
+  strategicNavigator,
+  mimicProtocol,
+  cabalProtocol,
+  vaultProtocol,
+  trueBornProtocol,
+  silencerProtocol,
+  shieldProtocol,
+  sanctuaryProtocol,
+  recallProtocol,
+  prismProtocol,
+  paladinProtocol,
+  originKey,
+  guardianProtocol,
+  aegisProtocol,
+  auraSensor
+};

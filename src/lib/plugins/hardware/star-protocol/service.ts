@@ -30,7 +30,7 @@ export class StarService implements RaizenPlugin {
       sensitive: true
     },
     {
-      id: 'star-bridge-global',
+      id: 'star-bridge',
       label: '[GOD-LEVEL] Bridge Global Network',
       description: 'Establish an absolute, untraceable bridge into any distant network globally.',
       category: 'hardware',

@@ -71,6 +71,7 @@ export const BiometricEnrollment: React.FC<BiometricEnrollmentProps> = ({ onComp
               <input 
                 type="text" 
                 placeholder="NAME"
+                aria-label="Enter your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 autoFocus
@@ -154,6 +155,7 @@ export const BiometricEnrollment: React.FC<BiometricEnrollmentProps> = ({ onComp
           width: 100vw;
           height: 100vh;
           background: rgba(0, 5, 10, 0.95);
+          -webkit-backdrop-filter: blur(10px);
           backdrop-filter: blur(10px);
           z-index: 9999;
           display: flex;

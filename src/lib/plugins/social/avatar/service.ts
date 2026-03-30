@@ -35,6 +35,13 @@ export class AvatarService implements RaizenPlugin {
       description: 'Create a temporary sub-agent to maintain your online presence on a specific platform.',
       category: 'social',
       sensitive: true
+    },
+    {
+      id: 'ghost_writer_draft',
+      label: 'Ghost-Writer Draft',
+      description: 'Drafts responses that mirror your tone to maintain your reputation.',
+      category: 'social',
+      sensitive: false
     }
   ];
 
@@ -59,6 +66,8 @@ export class AvatarService implements RaizenPlugin {
           return this.handleProspects(auditEntry.id);
         case 'spawn_presence_node':
           return await this.handleNodeSpawn(params, auditEntry.id);
+        case 'ghost_writer_draft':
+          return this.handleGhostWriter(params, auditEntry.id);
         default:
           return { success: false, error: 'Avatar coordination failed.', auditId: auditEntry.id };
       }
@@ -100,6 +109,18 @@ export class AvatarService implements RaizenPlugin {
         activeMissions: Array.from(this.activeMissions.entries()),
         recentVetting: ['Prospect_X: 92% Alignment', 'Prospect_Y: 84% Alignment'],
         status: 'MONITORING'
+      }, 
+      auditId 
+    };
+  }
+
+  private handleGhostWriter(params: Record<string, any>, auditId: string): ActionResult {
+    console.log('[AVATAR] GHOST-WRITER: Sythesizing response mirroring Patriarch tone...');
+    return { 
+      success: true, 
+      data: { 
+        draft: "That looks like an excellent opportunity. Let's touch base on Tuesday to finalize the terms. Best, P.",
+        toneMatch: 0.98 
       }, 
       auditId 
     };

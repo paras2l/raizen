@@ -11,6 +11,23 @@ export interface ContextSignal {
   priority: number;
 }
 
+export interface OracleSolution {
+  id: string;
+  label: string;
+  content: string;
+  confidence: number;
+  isOptimal: boolean;
+  actionPayload?: Record<string, any>;
+}
+
+export interface OracleSet {
+  primary: OracleSolution;
+  alternatives: OracleSolution[]; // Exactly 2
+  risk: 'NORMAL' | 'CRITICAL';
+  reason?: string;
+  persona?: 'ASSISTANT' | 'GUARDIAN' | 'SCHOLAR' | 'MIMIC';
+}
+
 export interface AnticipatedNeed {
   id: string;
   type: PredictionType;
@@ -18,6 +35,7 @@ export interface AnticipatedNeed {
   confidence: number;
   signals: string[]; // IDs of source signals
   reasons: string[];
+  oracleSet?: OracleSet;
 }
 
 export interface PredictiveConfig {
@@ -31,12 +49,13 @@ export interface PredictionResult {
   id: string;
   predictionId: string;
   timestamp: string;
-  content: string; // The draft, research, or summary
+  content: string; // The primary content
+  oracleSet?: OracleSet;
   metadata: Record<string, any>;
 }
 
 export interface PredictiveLogEntry {
   timestamp: string;
-  event: 'SIGNAL_CAP' | 'PREDICTION_MADE' | 'DRAFT_GEN' | 'CACHE_HIT' | 'PURGE';
+  event: 'SIGNAL_CAP' | 'PREDICTION_MADE' | 'DRAFT_GEN' | 'CACHE_HIT' | 'PURGE' | 'ARBITER_GATE';
   details: string;
 }

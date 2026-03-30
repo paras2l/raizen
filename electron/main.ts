@@ -1,4 +1,5 @@
-import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron'
+import { app, BrowserWindow, Tray, Menu, nativeImage, shell, ipcMain } from 'electron'
+import { exec } from 'node:child_process'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { discoveryService } from '../src/lib/network/bonjour'
@@ -99,8 +100,6 @@ app.whenReady().then(() => {
 const ADMIN_CODEWORD = 'paro the chief'
 const MASTER_CODEWORD = 'paro the master'
 
-import { ipcMain } from 'electron'
-
 ipcMain.handle('raizen-security-verify', (_event, input: string) => {
   const norm = input.trim().toLowerCase()
   if (norm.includes(MASTER_CODEWORD)) return 'master'
@@ -114,3 +113,78 @@ ipcMain.handle('raizen-security-clean', (_event, text: string) => {
     .replace(new RegExp(ADMIN_CODEWORD, 'ig'), '')
     .trim()
 })
+
+// --- Sovereign Orchestration (Native Execution) ---
+ipcMain.handle('system:open-url', async (_event, url: string) => {
+  console.log(`[ORCHESTRATION] Opening URL: ${url}`);
+  await shell.openExternal(url);
+  return { success: true };
+});
+
+ipcMain.handle('system:open-app', async (_event, appName: string) => {
+  console.log(`[ORCHESTRATION] Triggering App: ${appName}`);
+  
+  if (appName.toLowerCase() === 'whatsapp') {
+    await shell.openExternal('whatsapp://');
+    return { success: true };
+  }
+
+  // Windows-specific execution logic
+  const command = appName.toLowerCase() === 'chrome' ? 'start chrome' : `start ${appName}`;
+  return new Promise((resolve) => {
+    exec(command, (error) => {
+      if (error) {
+        console.error(`[EXEC ERROR] Failed to open ${appName}:`, error);
+        resolve({ success: false, error: error.message });
+      } else {
+        resolve({ success: true });
+      }
+    });
+  });
+});
+
+ipcMain.handle('system:network-scan', async () => {
+  console.log('[ORCHESTRATION] Scanning local network mesh...');
+  return new Promise((resolve) => {
+    exec('arp -a', (error, stdout) => {
+      if (error) {
+        resolve({ success: false, error: error.message });
+        return;
+      }
+      
+      const lines = stdout.split('\n');
+      const devices: { ip: string, mac: string, type: string }[] = [];
+      
+      lines.forEach(line => {
+        const match = line.trim().match(/(\d+\.\d+\.\d+\.\d+)\s+([0-9a-f-]{17})\s+(\w+)/i);
+        if (match) {
+          const ip = match[1];
+          const mac = match[2];
+          const type = match[3];
+          
+          if (!ip.startsWith('224.') && !ip.startsWith('239.')) { // Filter multicast
+             devices.push({ ip, mac, type });
+          }
+        }
+      });
+
+      resolve({ success: true, data: { devices } });
+    });
+  });
+});
+
+ipcMain.handle('system:exec-command', async (_event, command: string) => {
+  console.log(`[ORCHESTRATION] Executing Sovereign Command: ${command}`);
+  return new Promise((resolve) => {
+    exec(command, (error, stdout, stderr) => {
+      resolve({
+        success: !error,
+        data: {
+          stdout: stdout.trim(),
+          stderr: stderr.trim(),
+          error: error ? error.message : null
+        }
+      });
+    });
+  });
+});

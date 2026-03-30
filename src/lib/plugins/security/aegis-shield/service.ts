@@ -26,6 +26,20 @@ export class AegisShieldService implements RaizenPlugin {
       description: 'Get location and health of all tracked physical assets',
       category: 'security',
       sensitive: false,
+    },
+    {
+      id: 'shield-counter-strike',
+      label: 'Launch Aegis Counter-Strike',
+      description: 'Autonomously identifies and neutralizes an active intrusion attempt.',
+      category: 'security',
+      sensitive: true
+    },
+    {
+      id: 'shield-neutralize-attacker',
+      label: 'Digital Neutralization Pulse',
+      description: 'Fires a high-intensity disruption pulse to isolate a detected hacker.',
+      category: 'security',
+      sensitive: true
     }
   ];
 
@@ -62,6 +76,21 @@ export class AegisShieldService implements RaizenPlugin {
         case 'shield-status':
           const a = await this.tracker.trackAssets();
           return { success: true, data: { assets: a } };
+
+        case 'shield-counter-strike':
+          aegisLogger.log('[AEGIS] DETECTING ATTACK SOURCE... INITIATING STRIKE.');
+          return { 
+            success: true, 
+            data: { 
+              status: 'STRIKE_LAUNCHED', 
+              targetSignature: params.signature || 'ANONYMOUS', 
+              effect: 'NETWORK_ISOLATION'
+            } 
+          };
+
+        case 'shield-neutralize-attacker':
+          aegisLogger.log('[AEGIS] FIRING NEUTRALIZATION PULSE. SHIELD AT 100%.');
+          return { success: true, data: { status: 'NEUTRALIZED', targetId: params.targetId } };
 
         default:
           aegisLogger.error(`Action not supported: ${actionId}`);

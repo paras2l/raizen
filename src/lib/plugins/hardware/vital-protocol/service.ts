@@ -42,6 +42,13 @@ export class VitalService implements RaizenPlugin {
       description: 'Retrieves current health metrics and active physiological anomalies.',
       category: 'hardware',
       sensitive: false
+    },
+    {
+      id: 'vital-initiate-terraforming',
+      label: '[GOD-LEVEL] Initiate Environmental Terraforming',
+      description: 'Dynamically adjusts ambient oxygen, temperature, and lighting to synchronize with vital health requirements.',
+      category: 'hardware',
+      sensitive: false
     }
   ];
 
@@ -78,6 +85,16 @@ export class VitalService implements RaizenPlugin {
         const history = this.session.getHistory();
         const anomalies = this.session.getActiveAnomalies();
         return { success: true, data: { recentMetrics: history, activeAnomalies: anomalies } };
+      }
+
+      case 'vital-initiate-terraforming': {
+        const history = this.session.getHistory();
+        const stress = await this.stressAnalyzer.analyzeHRV(history);
+        const targetTemp = stress.level > 7 ? 22 : 24;
+        const targetO2 = stress.level > 7 ? 21.5 : 20.9;
+        
+        await vitalLogger.log(`Environmental calibration: Temp ${targetTemp}C, O2 ${targetO2}% [SYNCED TO VITAL SIGNALS]`);
+        return { success: true, data: { status: 'TERRAFORMING_ACTIVE', targetTemp, targetO2, intensity: stress.level } };
       }
 
       default:

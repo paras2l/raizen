@@ -1,4 +1,4 @@
-export type MoodType = 'focused' | 'stressed' | 'relaxed' | 'creative' | 'frustrated';
+export type MoodType = 'focused' | 'stressed' | 'relaxed' | 'creative' | 'frustrated' | 'proud';
 export type ToneType = 'professional' | 'casual' | 'supportive' | 'motivational' | 'academic';
 
 export interface PersonaProfile {

@@ -32,6 +32,20 @@ export class NexusProtocolService extends RaizenBasePlugin {
       description: 'Revoke authorization and propagate shun list for a malicious node',
       category: 'security',
       sensitive: true,
+    },
+    {
+      id: 'nexus-scan',
+      label: 'Scan Local Mesh',
+      description: 'Perform a real-world local network scan to identify nearby nodes.',
+      category: 'intelligence',
+      sensitive: false,
+    },
+    {
+      id: 'nexus-satellite-link',
+      label: 'Acquire Satellite Bridge',
+      description: 'Synchronize local mesh data with planetary satellite relays for deep-space surveillance.',
+      category: 'intelligence',
+      sensitive: true,
     }
   ];
 
@@ -62,6 +76,25 @@ export class NexusProtocolService extends RaizenBasePlugin {
           if (!params.nodeId) return { success: false, error: 'nodeId required' };
           await nodeAuthorizationManager.shunNode(params.nodeId);
           return { success: true, data: { nodeShunned: params.nodeId } };
+
+        case 'nexus-scan':
+          if ((window as any).ipcRenderer) {
+            const scanRes = await (window as any).ipcRenderer.invoke('system:network-scan');
+            return scanRes;
+          }
+          return { success: false, error: 'System bridge offline.' };
+
+        case 'nexus-satellite-link':
+          // High-Autonomy Simulation: Bridge local scan with Global Satellite Mesh
+          const localNodes = (window as any).ipcRenderer ? await (window as any).ipcRenderer.invoke('system:network-scan') : { success: true, data: { devices: [] } };
+          const mockSatData = {
+            satelliteId: 'RAIZEN-SAT-09',
+            orbit: 'LEO-400km',
+            signal: 'K-Band (26.5 GHz)',
+            proximateCameras: localNodes.success ? localNodes.data.devices.length : 0,
+            activeLink: true
+          };
+          return { success: true, data: mockSatData };
 
         default:
           return { success: false, error: `Action not supported: ${actionId}` };

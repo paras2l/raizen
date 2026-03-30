@@ -17,6 +17,7 @@ export class WhatsAppPlugin implements RaizenPlugin {
     { id: 'send', label: 'Send Message', description: 'Send a message to a contact or group.', category: 'communication', sensitive: true, icon: 'Send' },
     { id: 'sync', label: 'Sync Contacts', description: 'Fetch latest contact list.', category: 'communication', sensitive: false, icon: 'RefreshCw' },
     { id: 'inbox', label: 'Check Inbox', description: 'Read latest unread messages.', category: 'communication', sensitive: true, icon: 'Mail' },
+    { id: 'open', label: 'Open App', description: 'Launch the WhatsApp desktop application.', category: 'communication', sensitive: false, icon: 'ExternalLink' },
   ];
 
   private messageCallback?: (msg: any) => void;
@@ -40,6 +41,12 @@ export class WhatsAppPlugin implements RaizenPlugin {
         return this.sendMessage(params.to, params.text);
       case 'inbox':
         return { success: true, data: [] }; // Mocked
+      case 'open':
+        if ((window as any).ipcRenderer) {
+          await (window as any).ipcRenderer.invoke('system:open-app', 'whatsapp');
+          return { success: true, data: { status: 'opened' } };
+        }
+        return { success: false, error: 'System bridge unavailable.' };
       default:
         return { success: false, error: `Action ${actionId} not supported.` };
     }

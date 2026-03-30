@@ -1,5 +1,10 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { auditLedger } from '../../../governance';
+import { BehaviorCollector } from './collector';
+import { StyleProfiler } from './profiler';
+import { DigitalTwinEngine } from './engine';
+import { ActionSimulator } from './simulator';
+import { twinLogger } from './logger';
 
 /**
  * Cognitive Mirroring: The Digital Twin
@@ -10,6 +15,11 @@ export class CognitiveMirroringService implements RaizenPlugin {
   name = "Cognitive Mirroring (Digital Twin)";
   description = "God-Tier mirroring: Acts as your 'Digital Twin,' performing tasks exactly as you would, with your specific creative flair.";
   status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
+
+  private collector = new BehaviorCollector();
+  private profiler = new StyleProfiler();
+  private engine = new DigitalTwinEngine();
+  private simulator = new ActionSimulator();
 
   private styleVectors: Map<string, number> = new Map();
   private mirroringPrecision: number = 0.98;
@@ -70,17 +80,30 @@ export class CognitiveMirroringService implements RaizenPlugin {
   }
 
   private async handleEmulation(params: Record<string, any>, auditId: string): Promise<ActionResult> {
-    const target = params.target || 'GLOBAL_TASK';
-    console.log(`[MIRROR] Emulating user logic for ${target}...`);
+    const task = params.task || params.target || 'MISSION_PLAN';
+    console.log(`[MIRROR] Initiating identity-sync simulation for: ${task}`);
     
-    // Deep simulation of stylistic transformation
-    const transformationResult = `TRANSFORMED_TO_USER_STYLE_v${Math.floor(this.mirroringPrecision * 100)}`;
+    // 1. Collect Samples
+    const samples = this.collector.getSamples();
+    twinLogger.log({ event: 'BEHAVIOR_CAP', details: `Retrieved ${samples.length} behavioral samples.` });
+
+    // 2. Profile Style
+    const profile = this.profiler.analyze(samples);
+    twinLogger.log({ event: 'STYLE_SYNC', details: `Resonance Profile: Tone=${profile.tone}, Verbosity=${profile.verbosity}` });
+
+    // 3. Sync Engine
+    this.engine.sync(profile, { riskTolerance: 0.1, tradeOffFocus: 'speed', iterationStyle: 'fast-fail' });
+
+    // 4. Simulate Action
+    const mirrorResult = this.simulator.simulate(task, profile, { riskTolerance: 0.1, tradeOffFocus: 'speed', iterationStyle: 'fast-fail' });
+    twinLogger.log({ event: 'ACCURACY_UP', details: `Mirroring fidelity: ${this.mirroringPrecision}` });
 
     return { 
       success: true, 
       data: { 
-        output: transformationResult, 
+        output: mirrorResult, 
         precisionScore: this.mirroringPrecision,
+        profile,
         status: 'USER_RESONANCE_COMPLETE'
       }, 
       auditId 
@@ -89,14 +112,18 @@ export class CognitiveMirroringService implements RaizenPlugin {
 
   private async handleCalibration(params: Record<string, any>, auditId: string): Promise<ActionResult> {
     console.log('[MIRROR] Recalibrating style vectors from new interaction...');
+    
+    this.collector.collect('writing', 'CALIBRATION_EVENT', params.content || 'NEW_USER_INPUT');
     this.mirroringPrecision = Math.min(0.999, this.mirroringPrecision + 0.001);
     
+    twinLogger.log({ event: 'FEEDBACK_LOOP', details: `Precision increased to ${this.mirroringPrecision}` });
+
     return { 
       success: true, 
       data: { 
-        newPrecision: this.mirroringPrecision, 
-        updates: 4, 
-        status: 'TWIN_STEADY' 
+        twinState: this.engine.getState(this.collector.getSamples().length), 
+        updates: 1, 
+        status: 'TWIN_RECALIBRATED' 
       }, 
       auditId 
     };
@@ -108,6 +135,7 @@ export class CognitiveMirroringService implements RaizenPlugin {
       data: { 
         precision: this.mirroringPrecision,
         weights: Object.fromEntries(this.styleVectors),
+        twinState: this.engine.getState(this.collector.getSamples().length),
         archetype: 'MASTER_MIRROR'
       }, 
       auditId 

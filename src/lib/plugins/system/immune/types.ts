@@ -6,6 +6,8 @@ export interface SystemHealth {
   memoryUsage: number;
   latencyMs: number;
   failureRate: number;
+  isCoreValid?: boolean;
+  moduleEfficiency?: { id: string, score: number }[];
 }
 
 export interface AnomalyReport {

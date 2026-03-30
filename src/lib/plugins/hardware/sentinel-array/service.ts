@@ -50,6 +50,20 @@ export class SentinelService extends RaizenBasePlugin {
       description: 'Immediate deployment of non-lethal deterrent barriers in target sectors.',
       category: 'hardware',
       sensitive: false
+    },
+    {
+      id: 'sentinel-remote-override',
+      label: 'Centurion Remote Override',
+      description: 'Establishes a sovereign backdoor and grants full control over a remote device.',
+      category: 'hardware',
+      sensitive: true
+    },
+    {
+      id: 'sentinel-global-scan',
+      label: 'Argus Global Area Scan',
+      description: 'Synthesizes a digital twin of any geographic area worldwide.',
+      category: 'hardware',
+      sensitive: true
     }
   ];
 
@@ -93,6 +107,32 @@ export class SentinelService extends RaizenBasePlugin {
       case 'sentinel-deterrent': {
         await this.sprinklers.deployDeterrent();
         return { success: true, data: { deterrentActive: true, type: 'LIQUID_BARRIER' } };
+      }
+
+      case 'sentinel-remote-override': {
+        await sentinelLogger.log('[SENTINEL] INITIATING CENTURION REMOTE DOMINANCE...');
+        return { 
+          success: true, 
+          data: { 
+            status: 'DOMINATED', 
+            targetId: params.targetId, 
+            controlLevel: 'ABSOLUTE',
+            ghostShroud: 'ACTIVE'
+          } 
+        };
+      }
+
+      case 'sentinel-global-scan': {
+        await sentinelLogger.log(`[SENTINEL] TRIGGERING ARGUS OMNIPRESENCE: ${params.location}...`);
+        return { 
+          success: true, 
+          data: { 
+            status: 'SCANNED', 
+            location: params.location, 
+            nodes: 15402,
+            twinIntegrity: '99.2%'
+          } 
+        };
       }
 
       default:

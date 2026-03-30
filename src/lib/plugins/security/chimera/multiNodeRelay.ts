@@ -18,6 +18,11 @@ export class MultiNodeRelay {
   getActiveRelayCount(): number {
     return this.activeRelays.size;
   }
+
+  async distributeShards(count: number): Promise<string[]> {
+    chimeraLogger.log(`[CHIMERA] Sharding singularity core into ${count} fragments...`);
+    return Array.from({ length: count }, (_, i) => `SHARD_${i}_${Math.random().toString(36).substr(2, 5)}`);
+  }
 }
 
 export const multiNodeRelay = new MultiNodeRelay();

@@ -1,11 +1,10 @@
 export class FilesystemScanner {
-  async scanSensitivePaths(): Promise<string[]> {
-    console.log('[PRISM-SCAN] Indexing sensitive user data locations...');
+  async scan(path: string): Promise<any[]> {
+    console.log(`[PRISM-SCAN] Scanning path: ${path} for sensitive patterns...`);
     return [
-      '/Users/User/Documents',
-      '/Users/User/Photos',
-      '/Users/User/Downloads',
-      '/AppData/Paxion/Memory'
+      { path: '/Users/User/Photos/secrets.jpg', sensitive: true },
+      { path: '/Users/User/Documents/ledger.pdf', sensitive: true },
+      { path: '/Users/User/Public/notes.txt', sensitive: false }
     ];
   }
 }

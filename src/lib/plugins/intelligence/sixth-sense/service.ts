@@ -1,5 +1,10 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { auditLedger } from '../../../governance';
+import { EnvironmentDataCollector } from './data-collector';
+import { ChaosIndexCalculator } from './chaos-calculator';
+import { AlertPriorityManager } from './priority-manager';
+import { SignalAggregator } from './aggregator';
+import { ContextualNotificationEngine } from './notification-engine';
 
 /**
  * Sixth Sense: Ambient Awareness
@@ -9,7 +14,13 @@ export class SixthSenseService implements RaizenPlugin {
   id = 'intelligence.sixth_sense';
   name = "Ambient Awareness (The Sixth Sense Module)";
   description = "God-Tier awareness: Tracks real-world environmental data and adjusts system tone based on external 'chaos levels'.";
-  status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
+  status: 'offline' | 'connecting' | 'online' | 'error' = 'online';
+
+  private collector = new EnvironmentDataCollector();
+  private calculator = new ChaosIndexCalculator();
+  private priorityManager = new AlertPriorityManager();
+  private aggregator = new SignalAggregator();
+  private notificationEngine = new ContextualNotificationEngine();
 
   private environmentalCache: Map<string, any> = new Map();
   private chaosLevel: number = 0.12;
@@ -35,6 +46,13 @@ export class SixthSenseService implements RaizenPlugin {
       description: 'Manually override the system chaos level and notification tone.',
       category: 'system',
       sensitive: true
+    },
+    {
+       id: 'adjust_priority',
+       label: 'Adjust Priority',
+       description: 'Determine if a notification should be silenced based on ambient chaos.',
+       category: 'system',
+       sensitive: false
     }
   ];
 
@@ -61,6 +79,8 @@ export class SixthSenseService implements RaizenPlugin {
           return await this.handleCalibration(auditEntry.id);
         case 'trigger_alert_buffer':
           return await this.handleAlertOverride(params, auditEntry.id);
+        case 'adjust_priority':
+           return this.handlePriorityCheck(params, auditEntry.id);
         default:
           return { success: false, error: 'Sensory blackout.', auditId: auditEntry.id };
       }
@@ -71,17 +91,26 @@ export class SixthSenseService implements RaizenPlugin {
 
   private async handlePulse(auditId: string): Promise<ActionResult> {
     console.log('[SIXTH-SENSE] Sampling world events from news feeds and sensors...');
-    // Deep simulation of environmental analysis
-    const alerts = ['Traffic: Jams detected', 'Market: BTC +4%', 'Weather: Clear'];
-    this.chaosLevel = 0.24; // Simulated increase
+    const rawSignals = await this.collector.fetchSignals(['weather', 'finance', 'geopolitics' as any]);
+    const aggregatedSignals = this.aggregator.aggregate(rawSignals);
+    
+    this.chaosLevel = this.calculator.calculate(aggregatedSignals);
+    const tone = this.notificationEngine.adapt(this.chaosLevel);
+    
+    const warnings: string[] = [];
+    aggregatedSignals.forEach(sig => {
+       const warning = this.notificationEngine.getProactiveWarning(sig.category, sig.severity);
+       if (warning) warnings.push(warning);
+    });
 
     return { 
       success: true, 
       data: { 
         chaosLevel: this.chaosLevel, 
         environmentalStats: Array.from(this.environmentalCache.entries()),
-        recentAlerts: alerts,
-        toneRecommendation: 'FOCUS_MODE' 
+        recentAlerts: aggregatedSignals.map(s => s.description),
+        proactiveWarnings: warnings,
+        toneRecommendation: tone
       }, 
       auditId 
     };
@@ -98,6 +127,12 @@ export class SixthSenseService implements RaizenPlugin {
     console.warn(`[SIXTH-SENSE] MANUAL CHAOS OVERRIDE: ${level}`);
     
     return { success: true, data: { status: 'ALERT_LEVEL_LOCKED', level }, auditId };
+  }
+
+  private handlePriorityCheck(params: Record<string, any>, auditId: string): ActionResult {
+     const { priority } = params;
+     const silence = this.priorityManager.shouldSilence(priority, this.chaosLevel);
+     return { success: true, data: { silence, threshold: this.chaosLevel * 0.8 }, auditId };
   }
 }
 

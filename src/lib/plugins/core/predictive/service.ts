@@ -38,3 +38,5 @@ export class PredictiveIntelPlugin implements RaizenPlugin {
     }
   }
 }
+
+export const predictiveIntel = new PredictiveIntelPlugin();

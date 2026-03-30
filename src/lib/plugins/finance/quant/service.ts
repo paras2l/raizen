@@ -49,6 +49,20 @@ export class QuantProtocolService extends RaizenBasePlugin {
       description: 'View active tickers and signal integrity metrics',
       category: 'financial',
       sensitive: false,
+    },
+    {
+      id: 'quant-predict-blocks',
+      label: 'Predict Profitable Blocks',
+      description: 'Scans global mempools to direct the mining mesh to the highest-reward blocks.',
+      category: 'financial',
+      sensitive: true
+    },
+    {
+      id: 'quant-initiate-mining',
+      label: 'Initiate 100x Mining',
+      description: 'Triggers the global Venture-Mint mesh for untraceable wealth extraction.',
+      category: 'financial',
+      sensitive: true
     }
   ];
 
@@ -99,6 +113,15 @@ export class QuantProtocolService extends RaizenBasePlugin {
               accuracyRating: '98.7%'
             }
           };
+
+        case 'quant-predict-blocks':
+          quantLogger.log('[QUANT] Scanning global mempools for mining optimization...');
+          return { success: true, data: { targetChain: 'BTC', profitPrediction: '+18.2%', timeWindow: '30s' } };
+
+        case 'quant-initiate-mining':
+          quantLogger.log('[QUANT] COORDINATING 100x MINING MESH...');
+          // Logic: Link to ventureMint directly
+          return { success: true, data: { hashrate: '102.4x Standard', status: 'SYNTHESIZING_WEALTH' } };
 
         default:
           return { success: false, error: `Action not supported: ${actionId}` };

@@ -1,5 +1,10 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { auditLedger } from '../../../governance';
+import { ConceptInterpreter } from './interpreter';
+import { UIMockGenerator } from './ui-generator';
+import { CodeStubGenerator } from './code-generator';
+import { AssetGenerator } from './asset-generator';
+import { PrototypeAssembler } from './assembler';
 
 /**
  * Mirage Engine: Reality Synthesis
@@ -11,7 +16,13 @@ export class MirageEngineService implements RaizenPlugin {
   description = "God-Tier prototyping: Generates high-fidelity 'Synthetic Proof-of-Concept' in seconds.";
   status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
 
-  private activeSynthetics: Map<string, { type: string, timestamp: number }> = new Map();
+  private interpreter = new ConceptInterpreter();
+  private uiGenerator = new UIMockGenerator();
+  private codeGenerator = new CodeStubGenerator();
+  private assetGenerator = new AssetGenerator();
+  private assembler = new PrototypeAssembler();
+
+  private activeSynthetics: Map<string, any> = new Map();
   private gpuLoadSim: number = 0.42;
 
   actions: PluginAction[] = [
@@ -68,20 +79,26 @@ export class MirageEngineService implements RaizenPlugin {
   }
 
   private async handleSynthesis(params: Record<string, any>, auditId: string): Promise<ActionResult> {
-    const prompt = params.prompt || 'UNIVERSAL_UI_SYSTEM';
-    console.log(`[MIRAGE] SYNTHESIZING reality for prompt: "${prompt}"...`);
+    const description = params.prompt || params.description || 'UNIVERSAL_UI_SYSTEM';
+    console.log(`[MIRAGE] SYNTHESIZING reality for description: "${description}"...`);
     
-    // Deep simulation of rendering process
-    const mirageId = `MIR_${Math.random().toString(16).slice(2, 6)}`;
-    this.activeSynthetics.set(mirageId, { type: params.type || 'UI_MOCKUP', timestamp: Date.now() });
+    const intent = this.interpreter.interpret(description);
+    const html = this.uiGenerator.generateHTML(intent);
+    const code = this.codeGenerator.generateStubs(intent.topic);
+    const assets = this.assetGenerator.generate(intent.topic);
+    const demo = this.assembler.assemble(intent, html, code, assets);
+
+    this.activeSynthetics.set(demo.id, demo);
 
     return { 
       success: true, 
       data: { 
-        mirageId, 
-        renderUrl: `/synthetic/view/${mirageId}`, 
-        assetsGenerated: ['layout.png', 'styles.css', 'logic_stubs.ts'],
-        status: 'REALITY_FROZEN' 
+        mirageId: demo.id, 
+        renderUrl: `/synthetic/view/${demo.id}`, 
+        assetsGenerated: assets.icons.concat(assets.images),
+        status: 'REALITY_FROZEN',
+        preview: demo.htmlPreview,
+        code: demo.codeStubs
       }, 
       auditId 
     };
@@ -91,7 +108,7 @@ export class MirageEngineService implements RaizenPlugin {
     return { 
       success: true, 
       data: { 
-        mirages: Array.from(this.activeSynthetics.entries()),
+        mirages: Array.from(this.activeSynthetics.values()),
         load: this.gpuLoadSim,
         status: 'READY'
       }, 

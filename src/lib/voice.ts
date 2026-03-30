@@ -12,9 +12,9 @@ export class RaizenVoiceSystem {
   private isListening: boolean = false;
   private config: VoiceConfig & { secondaryWakeWords: string[] } = {
     wakeWord: 'hey raizen',
-    secondaryWakeWords: ['raizen one', 'ghost', 'paro the god'],
+    secondaryWakeWords: ['raizen wake up', 'wake up raizen', 'raizen one', 'ghost', 'paro the god'],
     continuousMode: false,
-    sensitivity: 0.8
+    sensitivity: 0.9
   };
 
   private constructor() {}
@@ -71,6 +71,11 @@ export class RaizenVoiceSystem {
       } 
     });
     window.dispatchEvent(event);
+
+    // Auto-launch Greeting
+    await PluginRegistry.getInstance().executeAction('communication.echo', 'speak', { 
+      message: resonanceTier === 'SOVEREIGN' ? "System online, my Lord Paro. How may I assist you?" : "Raizen online. Awaiting command."
+    });
 
     await auditLedger.append('action_result', {
       type: 'voice_wake',

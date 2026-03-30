@@ -38,3 +38,5 @@ export class ParoPlugin implements RaizenPlugin {
     }
   }
 }
+
+export const paroCore = new ParoPlugin();

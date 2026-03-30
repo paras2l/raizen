@@ -48,6 +48,13 @@ export class VentureProtocolService implements RaizenPlugin {
       description: 'View active remote nodes and hardware synthesis metrics',
       category: 'financial',
       sensitive: false,
+    },
+    {
+      id: 'venture-synthesize-hardware',
+      label: 'Synthesize Infinite Hardware',
+      description: 'Negotiate and spawn ephemeral global compute nodes for overflow tasks.',
+      category: 'financial',
+      sensitive: true,
     }
   ];
 
@@ -98,8 +105,30 @@ export class VentureProtocolService implements RaizenPlugin {
           return { success: true, data: { status: 'INTEGRATED' } };
 
         case 'venture-mesh-sync':
-          const meshResult = await shadowMeshOrchestrator.synchronizeMesh();
-          return { success: true, data: { result: meshResult } };
+          await shadowMeshOrchestrator.synchronizeMesh();
+          return { success: true, data: { status: 'MESH_SYNCHRONIZED' } };
+
+        case 'venture-synthesize-hardware':
+          const targetResource = params.resource || 'GPU';
+          ventureLogger.log(`[VENTURE] Initiating Infinite Hardware Synthesis for [${targetResource}]...`);
+          const nodeAllocated = await remoteTaskAllocator.allocate({ 
+                    id: `synth-${Date.now()}`, 
+                    payload: { type: 'HYPER_SYNTHESIS' },
+                    resourceRequired: targetResource,
+                    status: 'pending'
+                  });
+          if (!nodeAllocated) return { success: false, error: 'GLOBAL_COMPUTE_EXHAUSTION' };
+          
+          await ephemeralNetworkLayer.establishLink(nodeAllocated.id);
+          return { 
+            success: true, 
+            data: { 
+              status: 'SHADOW_NODE_ACTIVE', 
+              nodeId: nodeAllocated.id, 
+              region: nodeAllocated.region,
+              syntheticPower: 'Unlimited'
+            } 
+          };
 
         case 'venture-status':
           return {

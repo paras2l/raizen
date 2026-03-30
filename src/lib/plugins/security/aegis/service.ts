@@ -1,6 +1,10 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { RaizenBasePlugin } from '../../base';
 import { auditLedger } from '../../../governance';
+import { EventStreamMonitor } from './event-monitor';
+import { BreachDetectionEngine } from './breach-engine';
+import { DefenseHardeningController } from './hardening-controller';
+import { MicroEvent, HardeningLevel } from './types';
 
 /**
  * Aegis Bot: Cyber-Kinetic Counter-Strike
@@ -12,8 +16,12 @@ export class AegisService extends RaizenBasePlugin {
   description = "God-Tier active sentinel: Launches counter-intelligence probes to gather info on attackers while hardening system.";
   status: 'offline' | 'connecting' | 'online' | 'error' = 'offline';
 
-  private probeHistory: Map<string, { targetIp: string, dataHarvested: string }> = new Map();
-  private alertThreshold: number = 0.85;
+  // Security Engines
+  private monitor = new EventStreamMonitor();
+  private detection = new BreachDetectionEngine();
+  private hardening = new DefenseHardeningController();
+  
+  private probeHistory: Map<string, any> = new Map();
 
   actions: PluginAction[] = [
     {
@@ -31,11 +39,11 @@ export class AegisService extends RaizenBasePlugin {
       sensitive: true
     },
     {
-      id: 'get_probe_report',
-      label: 'Sentry Logs',
-      description: 'Get a report on active sentry activity and harvested attacker signatures.',
+      id: 'detect-breaches',
+      label: 'Scan Micro-Events',
+      description: 'Analyze recent micro-event stream for suspicious sequences.',
       category: 'system',
-      sensitive: true
+      sensitive: false
     }
   ];
 
@@ -43,9 +51,12 @@ export class AegisService extends RaizenBasePlugin {
     await super.initialize();
     this.log('Active sentinel hot. Kinetic counters: READY.');
     
+    // Start tracking micro-events
+    this.monitor.capture({ type: 'api_call', source: 'AEGIS_BOOT', payload: { status: 'SENTRY_INITIALIZED' } });
+
     this.onEvent('SYSTEM_LOCKDOWN_COMMAND', (data) => {
         this.log(`LOCKDOWN SIGNAL RECEIVED: ${data.reason}. Initiating fortify protocols...`);
-        this.handleHardening('SINGULARITY_AUTO_GATE');
+        this.hardening.setHardening('lockdown');
     });
   }
 
@@ -62,9 +73,9 @@ export class AegisService extends RaizenBasePlugin {
         case 'engage_counter_strike':
           return await this.handleCounterStrike(params, auditEntry.id);
         case 'harden_system_instant':
-          return await this.handleHardening(auditEntry.id);
-        case 'get_probe_report':
-          return this.handleReport(auditEntry.id);
+          return await this.handleHardening(params, auditEntry.id);
+        case 'detect-breaches':
+          return this.handleDetection(auditEntry.id);
         default:
           return { success: false, error: 'Aegis sentinel offline.', auditId: auditEntry.id };
       }
@@ -74,12 +85,11 @@ export class AegisService extends RaizenBasePlugin {
   }
 
   private async handleCounterStrike(params: Record<string, any>, auditId: string): Promise<ActionResult> {
-    const sourceIp = params.sourceIp || '192.168.0.x-UNDISCLOSED';
+    const sourceIp = params.sourceIp || 'UNDISCLOSED';
     console.warn(`[AEGIS] BREACH DETECTED from ${sourceIp}. LAUNCHING COUNTER-PROBE...`);
     
-    // Deep simulation of counter-intelligence harvesting
     const probeId = `PROBE_${Math.random().toString(16).slice(2, 6)}`;
-    this.probeHistory.set(probeId, { targetIp: sourceIp, dataHarvested: 'GEO_LOC, OS_SIG, MAC_ADDR' });
+    this.probeHistory.set(probeId, { targetIp: sourceIp, data: 'GEO_LOC, OS_SIG, TRACE_ROUTE' });
 
     this.emitEvent('SECURITY_BREACH', { source: sourceIp, probeId, status: 'STRIKE_SUCCESS' });
 
@@ -88,22 +98,20 @@ export class AegisService extends RaizenBasePlugin {
       data: { 
         probeId, 
         status: 'STRIKE_SUCCESS', 
-        harvested: 'Attacker identified and logged.',
         target: sourceIp 
       }, 
       auditId 
     };
   }
 
-  private async handleHardening(auditId: string): Promise<ActionResult> {
-    console.log('[AEGIS] INITIATING INSTANT HARDENING...');
-    // Simulating port closure and process encryption
-    const stats = { portsClosed: 1422, processEncryption: 'ACTIVE', entropyLevel: 'MAX' };
+  private async handleHardening(params: Record<string, any>, auditId: string): Promise<ActionResult> {
+    const level = (params.level as HardeningLevel) || 'fortress';
+    this.hardening.setHardening(level);
 
     return { 
       success: true, 
       data: { 
-        stats, 
+        level,
         integrity: 1.0, 
         status: 'FORTRESS_MODE' 
       }, 
@@ -111,12 +119,16 @@ export class AegisService extends RaizenBasePlugin {
     };
   }
 
-  private handleReport(auditId: string): ActionResult {
+  private handleDetection(auditId: string): ActionResult {
+    const sequence = this.monitor.getRecent();
+    const breach = this.detection.analyze(sequence);
+    
     return { 
       success: true, 
       data: { 
-        activeProbes: Array.from(this.probeHistory.entries()),
-        alertThreshold: this.alertThreshold,
+        eventCount: sequence.length,
+        breachDetected: !!breach,
+        breach,
         status: 'MONITORING_MICROEVEVTS'
       }, 
       auditId 

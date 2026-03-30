@@ -1,84 +1,63 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
-import { CognitiveLoadAnalyzer } from './focus-shield/cognitiveLoadAnalyzer';
-import { TaskFragmentationDetector } from './focus-shield/taskFragmentationDetector';
-import { NotificationControlEngine } from './focus-shield/notificationControlEngine';
-import { FocusEnvironmentManager } from './focus-shield/focusEnvironmentManager';
-import { FocusSessionManager } from './focus-shield/focusSessionManager';
-import { FocusIntegrationEngine } from './focus-shield/focusIntegrationEngine';
+import { 
+  CognitiveLoadAnalyzer, TaskFragmentationDetector, NotificationControlEngine, 
+  FocusEnvironmentManager, FocusSessionManager, FocusIntegrationEngine 
+} from './focus-shield';
 
-import { BiometricSignalListener } from './equilibrium/biometricSignalListener';
-import { StressDetectionEngine } from './equilibrium/stressDetectionEngine';
-import { UIMoodAdapter } from './equilibrium/uiMoodAdapter';
-import { CalmEnvironmentGenerator } from './equilibrium/calmEnvironmentGenerator';
-import { WellbeingSessionManager } from './equilibrium/wellbeingSessionManager';
-import { BiometricCohesionModule } from './equilibrium/biometricCohesionModule';
+import { 
+  BiometricSignalListener, StressDetectionEngine, UIMoodAdapter, 
+  CalmEnvironmentGenerator, WellbeingSessionManager, BiometricCohesionModule 
+} from './equilibrium';
 
-import { InsightSignalDetector } from './eureka/insightSignalDetector';
-import { WorkspaceContextSnapshot } from './eureka/workspaceContextSnapshot';
-import { IdeaCaptureEngine } from './eureka/ideaCaptureEngine';
-import { ContextIndexingSystem } from './eureka/contextIndexingSystem';
-import { InsightTimelineManager } from './eureka/insightTimelineManager';
-import { EurekaSessionManager } from './eureka/eurekaSessionManager';
+import { 
+  InsightSignalDetector, WorkspaceContextSnapshot, IdeaCaptureEngine, 
+  ContextIndexingSystem, InsightTimelineManager, EurekaSessionManager 
+} from './eureka';
 
-import { ProblemCollectionEngine } from './dream/problemCollectionEngine';
-import { NightCycleAnalysisEngine } from './dream/nightCycleAnalysisEngine';
-import { SolutionSimulationModule } from './dream/solutionSimulationModule';
-import { InsightSynthesisEngine } from './dream/insightSynthesisEngine';
-import { MorningBriefingGenerator } from './dream/morningBriefingGenerator';
-import { DreamSessionManager } from './dream/dreamSessionManager';
+import { 
+  ProblemCollectionEngine, NightCycleAnalysisEngine, SolutionSimulationModule, 
+  InsightSynthesisEngine, MorningBriefingGenerator, DreamSessionManager 
+} from './dream';
 
-import { IntentPredictionEngine } from './synapse/intentPredictionEngine';
-import { InteractionPatternAnalyzer } from './synapse/interactionPatternAnalyzer';
-import { ResourcePreloader } from './synapse/resourcePreloader';
-import { InterfaceHighlightManager } from './synapse/interfaceHighlightManager';
-import { LatencyOptimizationEngine } from './synapse/latencyOptimizationEngine';
-import { SynapseSessionManager } from './synapse/synapseSessionManager';
-import { StateSignalAnalyzer } from './aura/stateSignalAnalyzer';
-import { InteractionModeClassifier } from './aura/interactionModeClassifier';
-import { VoiceToneAdapter } from './aura/voiceToneAdapter';
-import { UIAtmosphereController } from './aura/uiAtmosphereController';
-import { IdentityStateManager } from './aura/identityStateManager';
-import { AuraSessionManager } from './aura/auraSessionManager';
+import { 
+  IntentPredictionEngine, InteractionPatternAnalyzer, ResourcePreloader, 
+  InterfaceHighlightManager, LatencyOptimizationEngine, SynapseSessionManager 
+} from './synapse';
 
-import { EmotionSignalDetector } from './empathy/emotionSignalDetector';
-import { InteractionStressAnalyzer } from './empathy/interactionStressAnalyzer';
-import { DecisionTimingController } from './empathy/decisionTimingController';
-import { EmotionalFeedbackAdapter } from './empathy/emotionalFeedbackAdapter';
-import { CalmStateManager } from './empathy/calmStateManager';
-import { EmpathySessionManager } from './empathy/empathySessionManager';
+import { 
+  StateSignalAnalyzer, InteractionModeClassifier, VoiceToneAdapter, 
+  UIAtmosphereController, IdentityStateManager, AuraSessionManager 
+} from './aura';
 
-import { IntentCaptureEngine } from './thought/intentCaptureEngine';
-import { ConceptInterpreter } from './thought/conceptInterpreter';
-import { LogicStructureBuilder } from './thought/logicStructureBuilder';
-import { CodeGenerationEngine } from './thought/codeGenerationEngine';
-import { CodeValidationModule } from './thought/codeValidationModule';
-import { ThoughtCodeSessionManager } from './thought/thoughtCodeSessionManager';
+import { 
+  EmotionSignalDetector, InteractionStressAnalyzer, DecisionTimingController, 
+  EmotionalFeedbackAdapter, CalmStateManager, EmpathySessionManager 
+} from './empathy';
 
-import { ExperienceIndexingEngine } from './recall/experienceIndexingEngine';
-import { ContextReconstructionModule } from './recall/contextReconstructionModule';
-import { MemorySearchEngine } from './recall/memorySearchEngine';
-import { PatternAssociationAnalyzer } from './recall/patternAssociationAnalyzer';
-import { RecallSuggestionSystem } from './recall/recallSuggestionSystem';
-import { MemorySessionManager } from './recall/memorySessionManager';
+import { 
+  IntentCaptureEngine, ConceptInterpreter, LogicStructureBuilder, 
+  CodeGenerationEngine, CodeValidationModule, ThoughtCodeSessionManager 
+} from './thought';
 
-import { SleepCycleAnalyzer } from './learning/sleepCycleAnalyzer';
-import { LearningContentManager } from './learning/learningContentManager';
-import { MemoryReinforcementPlanner } from './learning/memoryReinforcementPlanner';
-import { KnowledgeReviewEngine } from './learning/knowledgeReviewEngine';
-import { DreamLearningSessionManager } from './learning/dreamLearningSessionManager';
+import { 
+  ExperienceIndexingEngine, ContextReconstructionModule, MemorySearchEngine, 
+  PatternAssociationAnalyzer, RecallSuggestionSystem, MemorySessionManager 
+} from './recall';
 
-import { EnvironmentSignalMonitor } from './adrenaline/environmentSignalMonitor';
-import { RiskPatternAnalyzer } from './adrenaline/riskPatternAnalyzer';
-import { AlertGenerationEngine } from './adrenaline/alertGenerationEngine';
-import { ReactionGuidanceModule } from './adrenaline/reactionGuidanceModule';
-import { SovereignSessionManager } from './adrenaline/sovereignSessionManager';
+import { 
+  SleepCycleAnalyzer, LearningContentManager, MemoryReinforcementPlanner, 
+  KnowledgeReviewEngine, DreamLearningSessionManager 
+} from './learning';
 
-import { KnowledgeCaptureEngine } from './backup/knowledgeCaptureEngine';
-import { ActivityArchiver } from './backup/activityArchiver';
-import { ContextSnapshotManager } from './backup/contextSnapshotManager';
-import { DistributedBackupCoordinator } from './backup/distributedBackupCoordinator';
-import { KnowledgeRestoreSystem } from './backup/knowledgeRestoreSystem';
-import { BackupSessionManager } from './backup/backupSessionManager';
+import { 
+  EnvironmentSignalMonitor, RiskPatternAnalyzer, AlertGenerationEngine, 
+  ReactionGuidanceModule, SovereignSessionManager 
+} from './adrenaline';
+
+import { 
+  KnowledgeCaptureEngine, ActivityArchiver, ContextSnapshotManager, 
+  DistributedBackupCoordinator, KnowledgeRestoreSystem, BackupSessionManager 
+} from './backup';
 
 export class NeuralLinkService implements RaizenPlugin {
   id = 'neural-link';
@@ -431,7 +410,7 @@ export class NeuralLinkService implements RaizenPlugin {
         const pending = this.problemCollector.getPendingProblems();
         if (pending.length > 0) {
             await this.analysisEngine.startCycle(pending);
-            const simulations = await Promise.all(pending.map(p => this.simulationModule.simulate(p)));
+            const simulations = await Promise.all(pending.map((p: any) => this.simulationModule.simulate(p)));
             const insights = await this.synthesisEngine.synthesize(simulations);
             const briefing = await this.briefingGenerator.generate(insights);
             await this.dreamSession.setBriefing(briefing);
@@ -543,7 +522,7 @@ export class NeuralLinkService implements RaizenPlugin {
         const index = this.experienceIndexer.getIndex();
         const matches = this.memorySearch.search(query, index);
         
-        const insights = await Promise.all(matches.map(async m => {
+        const insights = await Promise.all(matches.map(async (m: any) => {
             const context = await this.contextReconstructor.reconstruct(m.entry, index);
             return { match: m, context };
         }));

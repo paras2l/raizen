@@ -1,6 +1,8 @@
 import { RaizenPlugin, PluginAction, ActionResult } from '../../types';
 import { RaizenBasePlugin } from '../../base';
 import { auditLedger } from '../../../governance';
+import { AgentSpawner } from './spawner';
+import { AgentRole } from './types';
 
 /**
  * Legion Protocol: Ultimate Autonomous Swarm
@@ -14,6 +16,12 @@ export class LegionService extends RaizenBasePlugin {
 
   private activeNodes: Map<string, { taskId: string, startTime: number }> = new Map();
   private maxCapacity = 100;
+  private spawner: AgentSpawner;
+
+  constructor() {
+    super();
+    this.spawner = new AgentSpawner({ maxAgents: 100, agentTimeoutMs: 30000, retryAttempts: 3 });
+  }
 
   actions: PluginAction[] = [
     {
@@ -81,13 +89,18 @@ export class LegionService extends RaizenBasePlugin {
     const count = Math.min(params.count || 10, this.maxCapacity - this.activeNodes.size);
     const missionFocus = params.task || 'GLOBAL_OPTIMIZATION';
 
-    console.log(`[LEGION] Initiating Mitosis for ${count} nodes. Mission: ${missionFocus}`);
+    console.log(`[LEGION] Orchestrating Mitosis for ${count} specialized workers. Mission: ${missionFocus}`);
 
+    const spawnedData = [];
     for (let i = 0; i < count; i++) {
-        const nodeId = `NODE_${Math.random().toString(16).slice(2, 6)}`;
-        this.activeNodes.set(nodeId, { taskId: missionFocus, startTime: Date.now() });
-        // Simulating worker initialization
-        console.log(`[LEGION] Node ${nodeId} synced and active.`);
+        const role: AgentRole = i % 2 === 0 ? 'analyst' : 'coordinator';
+        const worker = this.spawner.spawn(role);
+        if (worker) {
+          const nodeId = worker.id;
+          this.activeNodes.set(nodeId, { taskId: missionFocus, startTime: Date.now() });
+          spawnedData.push({ id: nodeId, role });
+          console.log(`[LEGION] Swarm Member ${nodeId} [${role}] synchronized.`);
+        }
     }
 
     this.emitEvent('SWARM_MITOSIS_COMPLETE', { count, task: missionFocus });
@@ -97,8 +110,9 @@ export class LegionService extends RaizenBasePlugin {
       data: { 
         spawnCount: count, 
         totalActive: this.activeNodes.size,
+        workers: spawnedData,
         status: 'SWARM_SYNCHRONIZED',
-        heartbeat: 'STABLE'
+        efficiency: 'PEAK'
       }, 
       auditId 
     };

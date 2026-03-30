@@ -66,6 +66,12 @@ export class AnchorProtocolService implements RaizenPlugin {
           const ledger = this.auditor.getLedger();
           return { success: true, data: { ledger } };
 
+        case 'check-safe-zone':
+          // Simulation: randomizing sanctuary status for demonstration
+          // In production, this would bridge to the OS geofencing API
+          const isSafe = Math.random() > 0.1; 
+          return { success: true, data: { isSafe, zoneId: isSafe ? 'HOME_BASE_01' : 'PUBLIC_NET', confidence: 0.98 } };
+
         default:
           anchorLogger.error(`Action not supported: ${actionId}`);
           return { success: false, error: `Action not supported: ${actionId}` };

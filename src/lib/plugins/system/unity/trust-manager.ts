@@ -1,4 +1,4 @@
-export class TrustPermissionManager {
+export class TrustManager {
   private allowedActions = new Set(['share_research', 'sync_technical_docs']);
 
   isAuthorized(actionId: string): boolean {

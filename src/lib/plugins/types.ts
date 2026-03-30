@@ -21,7 +21,7 @@ export interface RaizenPlugin {
   name: string;
   description: string;
   actions: PluginAction[];
-  status: 'offline' | 'connecting' | 'online' | 'error';
+  status: 'offline' | 'connecting' | 'online' | 'learning' | 'archived' | 'error';
   
   initialize(): Promise<void>;
   execute(actionId: string, params: Record<string, any>): Promise<ActionResult>;

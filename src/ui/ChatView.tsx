@@ -291,129 +291,138 @@ export function ChatView({
     setInputValue(''); // Clear input immediately
     setIsThinking(true);
 
-    if (isFirewallActive) {
-      const psychRes = await pluginRegistry.executeAction('security.neural_firewall', 'analyze_message_intent', { text });
-      if (psychRes.success && psychRes.data.riskLevel === 'CRITICAL') {
-        const missionResult = `**🧠 NEURAL FIREWALL INTERCEPT**\n- **Status**: [BLOCKED]\n- **Intent**: [${psychRes.data.intentDetected}]\n- **Probability**: [${(psychRes.data.manipulationProbability * 100).toFixed(1)}%]\n\n*Raizen has detected psychological manipulation patterns in this message. Execution halted for Patriarch safety.*`;
-        setMessages(prev => [...prev, {
-          id: `INTERCEPT-${Date.now()}`,
-          text: missionResult,
-          sender: 'raizen',
-          timestamp: new Date(),
-          isSovereign: true
-        }]);
-        setIsThinking(false);
-        return;
-      }
-    }
-
-    let lowerInput = text.toLowerCase()
-    let cleanInput = text.trim()
-    
-    const oracleResult = await pluginRegistry.executeAction('intelligence.predictive', 'precompute_solutions', { input: text });
-    if (oracleResult.success && oracleResult.data.oracleSet) {
-      const set = oracleResult.data.oracleSet;
-      
-      if (set.risk === 'CRITICAL' && !text.includes('::')) {
-        setOracleSet(set);
-        setShowOracleModal(true);
-        return;
-      }
-      
-      setOracleSet(set);
-    }
-
-    const policyResult = await checkCodewordObedience(text)
-    if (!policyResult.allowed) {
-      setSecurityError(policyResult.reason || 'Unauthorized operation.')
-      setTimeout(() => setSecurityError(null), 4000)
-      return
-    }
-
-    cleanInput = policyResult.cleanText
-    lowerInput = cleanInput.toLowerCase()
-
-    // --- Specialized Protocol Handlers ---
-    if (lowerInput.includes('failover') || lowerInput.includes('constellation')) {
-      const constellation = pluginRegistry.getPlugin('constellation-network');
-      if (constellation) {
-        setMessages(prev => [...prev, userMsg, { 
-          id: `constellation-sync-${Date.now()}`,
-          text: 'Initiating Constellation synchronization. Establishing mesh redundancy across secondary nodes.', 
-          sender: 'raizen', 
-          timestamp: new Date() 
-        }]);
-        constellation.execute('sync-constellation', {}).then(res => {
-          if (res.success) {
-            setMessages(prev => [...prev, { 
-              id: `constellation-done-${Date.now()}`,
-              text: 'Constellation synchronized. Secondary nodes (iPhone, iPad) are now in standby for auto-failover.', 
-              sender: 'raizen', 
-              timestamp: new Date() 
-            }]);
-          }
-        });
-        setInputValue('');
-        return;
-      }
-    }
-
-    if (lowerInput.includes('layout') || lowerInput.includes('morph')) {
-      const flux = pluginRegistry.getPlugin('flux-ui-morphology');
-      if (flux) {
-        setMessages(prev => [...prev, userMsg, { 
-          id: `flux-morph-${Date.now()}`,
-          text: 'Analyzing mission context for interface evolution...', 
-          sender: 'raizen', 
-          timestamp: new Date() 
-        }]);
-        flux.execute('morph-interface', { task: cleanInput }).then(res => {
-          if (res.success) {
-            setMessages(prev => [...prev, { 
-              id: `flux-done-${Date.now()}`,
-              text: `Interface evolved to ${res.data.mode}. Optimization complete.`, 
-              sender: 'raizen', 
-              timestamp: new Date() 
-            }]);
-            if (res.data.mode === 'focus_mode') setLayoutMode('focus_mode');
-          }
-        });
-        setInputValue('');
-        return;
-      }
-    }
-
-    if (lowerInput.includes('learn') || lowerInput.includes('research') || lowerInput.includes('scholar')) {
-      const scholar = pluginRegistry.getPlugin('scholar-protocol');
-      if (scholar) {
-        const topic = cleanInput.split('learn ')[1] || cleanInput.split('research ')[1] || 'Unknown Concept';
-        setIsLearning(true);
-        setLearningTopic(topic);
-        setMessages(prev => [...prev, userMsg, { 
-          id: `scholar-init-${Date.now()}`,
-          text: `Initiating Scholar Protocol. Branching out to master '${topic}' via optimized multi-source synthesis.`, 
-          sender: 'raizen', 
-          timestamp: new Date() 
-        }]);
-        scholar.execute('research-concept', { topic }).then(res => {
-          if (res.success) {
-            setMessages(prev => [...prev, { 
-              id: `scholar-done-${Date.now()}`,
-              text: `Mastery attained. Synthesized data from ${res.data.sources.join(', ')} with ${res.data.confidence * 100}% fidelity. Briefing ready in Mission Center.`, 
-              sender: 'raizen', 
-              timestamp: new Date() 
-            }]);
-            setIsLearning(false);
-          }
-        });
-        setInputValue('');
-        return;
-      }
-    }
-
-    // --- AI Call Logic (Central Core Engine) ---
-    const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN OS Core Intelligence. Absolute Sovereignty. Concise responses.`
     try {
+      if (isFirewallActive) {
+        const psychRes = await pluginRegistry.executeAction('security.neural_firewall', 'analyze_message_intent', { text });
+        if (psychRes.success && psychRes.data.riskLevel === 'CRITICAL') {
+          const missionResult = `**🧠 NEURAL FIREWALL INTERCEPT**\n- **Status**: [BLOCKED]\n- **Intent**: [${psychRes.data.intentDetected}]\n- **Probability**: [${(psychRes.data.manipulationProbability * 100).toFixed(1)}%]\n\n*Raizen has detected psychological manipulation patterns in this message. Execution halted for Patriarch safety.*`;
+          setMessages(prev => [...prev, {
+            id: `INTERCEPT-${Date.now()}`,
+            text: missionResult,
+            sender: 'raizen',
+            timestamp: new Date(),
+            isSovereign: true
+          }]);
+          return;
+        }
+      }
+
+      let lowerInput = text.toLowerCase()
+      let cleanInput = text.trim()
+      
+      if (lowerInput.includes('mission') || lowerInput.includes('status')) {
+        const missionResult = await pluginRegistry.executeAction('security.adversary_model', 'evaluate_mission_status', { text })
+        if (missionResult.success) {
+          setMessages(prev => [...prev, {
+            id: `MISSION-${Date.now()}`,
+            text: missionResult.data.report || missionResult.data,
+            sender: 'raizen',
+            timestamp: new Date(),
+            isSovereign: true
+          }]);
+          return;
+        }
+      }
+
+      const oracleResult = await pluginRegistry.executeAction('intelligence.predictive', 'precompute_solutions', { input: text });
+      if (oracleResult.success && oracleResult.data.oracleSet) {
+        const set = oracleResult.data.oracleSet;
+        
+        if (set.risk === 'CRITICAL' && !text.includes('::')) {
+          setOracleSet(set);
+          setShowOracleModal(true);
+          return;
+        }
+        
+        setOracleSet(set);
+      }
+
+      const policyResult = await checkCodewordObedience(text)
+      if (!policyResult.allowed) {
+        setSecurityError(policyResult.reason || 'Unauthorized operation.')
+        setTimeout(() => setSecurityError(null), 4000)
+        return
+      }
+
+      cleanInput = policyResult.cleanText
+      lowerInput = cleanInput.toLowerCase()
+
+      // --- Specialized Protocol Handlers ---
+      if (lowerInput.includes('failover') || lowerInput.includes('constellation')) {
+        const constellation = pluginRegistry.getPlugin('constellation-network');
+        if (constellation) {
+          setMessages(prev => [...prev, { 
+            id: `constellation-sync-${Date.now()}`,
+            text: 'Initiating Constellation synchronization. Establishing mesh redundancy across secondary nodes.', 
+            sender: 'raizen', 
+            timestamp: new Date() 
+          }]);
+          constellation.execute('sync-constellation', {}).then(res => {
+            if (res.success) {
+              setMessages(prev => [...prev, { 
+                id: `constellation-done-${Date.now()}`,
+                text: 'Constellation synchronized. Secondary nodes (iPhone, iPad) are now in standby for auto-failover.', 
+                sender: 'raizen', 
+                timestamp: new Date() 
+              }]);
+            }
+          });
+          return;
+        }
+      }
+
+      if (lowerInput.includes('layout') || lowerInput.includes('morph')) {
+        const flux = pluginRegistry.getPlugin('flux-ui-morphology');
+        if (flux) {
+          setMessages(prev => [...prev, { 
+            id: `flux-morph-${Date.now()}`,
+            text: 'Analyzing mission context for interface evolution...', 
+            sender: 'raizen', 
+            timestamp: new Date() 
+          }]);
+          flux.execute('morph-interface', { task: cleanInput }).then(res => {
+            if (res.success) {
+              setMessages(prev => [...prev, { 
+                id: `flux-done-${Date.now()}`,
+                text: `Interface evolved to ${res.data.mode}. Optimization complete.`, 
+                sender: 'raizen', 
+                timestamp: new Date() 
+              }]);
+              if (res.data.mode === 'focus_mode') setLayoutMode('focus_mode');
+            }
+          });
+          return;
+        }
+      }
+
+      if (lowerInput.includes('learn') || lowerInput.includes('research') || lowerInput.includes('scholar')) {
+        const scholar = pluginRegistry.getPlugin('scholar-protocol');
+        if (scholar) {
+          const topic = cleanInput.split('learn ')[1] || cleanInput.split('research ')[1] || 'Unknown Concept';
+          setIsLearning(true);
+          setLearningTopic(topic);
+          setMessages(prev => [...prev, { 
+            id: `scholar-init-${Date.now()}`,
+            text: `Initiating Scholar Protocol. Branching out to master '${topic}' via optimized multi-source synthesis.`, 
+            sender: 'raizen', 
+            timestamp: new Date() 
+          }]);
+          scholar.execute('research-concept', { topic }).then(res => {
+            if (res.success) {
+              setMessages(prev => [...prev, { 
+                id: `scholar-done-${Date.now()}`,
+                text: `Mastery attained. Synthesized data from ${res.data.sources.join(', ')} with ${res.data.confidence * 100}% fidelity. Briefing ready in Mission Center.`, 
+                sender: 'raizen', 
+                timestamp: new Date() 
+              }]);
+              setIsLearning(false);
+            }
+          });
+          return;
+        }
+      }
+
+      // --- AI Call Logic (Central Core Engine) ---
       if (!config || !config.apiKey) {
         throw new Error("Neural Hub Disconnected: Please configure an AI agent and API key in the Mission Center (Neural Hub).");
       }
@@ -445,18 +454,19 @@ export function ChatView({
       });
 
       raizenMemory.add(cleanInput, { role: 'user', session: currentSessionId }).catch(() => {})
-      raizenMemory.add(result.text, { role: 'assistant', session: currentSessionId }).catch(() => {})
+      raizenMemory.add(aiMsg.text, { role: 'assistant', session: currentSessionId }).catch(() => {})
 
       if (voiceMode) speak(aiMsg.text)
-    } catch (e: any) {
-      console.error('[CORE_ENGINE_FAILURE]', e)
-      setMessages(prev => [...prev, {
-        id: `ERR-${Date.now()}`,
-        text: `**⚠️ [CORE_ENGINE_FAILURE]**\n${e.message}`,
+    } catch (err: any) {
+      console.error('[CHAT_ERROR]', err);
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
         sender: 'raizen',
+        text: `[SYSTEM_ERROR] ${err.message || 'The Neural Link has entered a recursive feedback loop. Check your connection.'}`,
         timestamp: new Date(),
         isSovereign: true
-      }]);
+      };
+      setMessages(prev => [...prev, errorMessage]);
     } finally {
       setIsThinking(false)
     }

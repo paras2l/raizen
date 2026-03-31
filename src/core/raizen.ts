@@ -65,11 +65,31 @@ export async function callRaizenAI(
           temperature: 0.7
         };
 
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body)
-    });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout
 
-    return await response.json();
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[RAIZEN_AI_ERROR]', response.status, errorData);
+        throw new Error(`Neural Link Offline (${response.status}): ${errorData.error?.message || response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (err: any) {
+      clearTimeout(timeoutId);
+      if (err.name === 'AbortError') {
+        throw new Error("Neural Link Timeout: The Core is taking too long to respond.");
+      }
+      throw err;
+    }
 }

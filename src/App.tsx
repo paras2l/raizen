@@ -139,23 +139,37 @@ const tabs: Tab[] = [
 
 const SystemStatusMonitor = ({ children, isMobile }: { children: React.ReactNode, isMobile: boolean }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (triggerRef.current) {
+      triggerRef.current.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+      if (isOpen) {
+        triggerRef.current.setAttribute('aria-controls', 'system-protocol-panel');
+      } else {
+        triggerRef.current.removeAttribute('aria-controls');
+      }
+    }
+  }, [isOpen]);
+
   const count = React.Children.count(children);
   
   return (
     <div className={`system-status-monitor ${isOpen ? 'open' : ''} ${isMobile ? 'mobile' : ''}`}>
       <button 
+        ref={triggerRef}
+        type="button"
         className="status-summary-trigger" 
         onClick={() => setIsOpen(!isOpen)}
-        aria-expanded={isOpen ? "true" : "false"}
       >
-        <div className="status-dot-group">
+        <span className="status-dot-group">
           <Activity size={14} className="pulse" />
           <span className="protocol-count">{count} PROTOCOLS</span>
-        </div>
-        <div className="status-meta">
+        </span>
+        <span className="status-meta">
           <span className="status-label">SYSTEM_OMNIPRESENCE</span>
           <ChevronDown size={12} className={`chevron-icon ${isOpen ? 'rotate' : ''}`} />
-        </div>
+        </span>
       </button>
 
       <AnimatePresence>
@@ -173,6 +187,7 @@ const SystemStatusMonitor = ({ children, isMobile }: { children: React.ReactNode
               animate={{ y: 0, opacity: 1, scale: 1 }}
               exit={{ y: -20, opacity: 0, scale: 0.95 }}
               className="status-monitor-panel"
+              id="system-protocol-panel"
             >
               <div className="panel-header">
                 <h3>VANGUARD_STATUS_MESH</h3>
@@ -698,18 +713,25 @@ export default function App() {
     initSystem();
   }, []);
 
+  const isInitialized = useRef(false)
   useEffect(() => {
     const savedAgents = localStorage.getItem('raizen-agents')
     const savedActiveId = localStorage.getItem('raizen-active-agent-id')
     if (savedAgents) {
-      const parsed = JSON.parse(savedAgents)
-      setAgents(parsed)
-      if (savedActiveId) setActiveAgentId(savedActiveId)
-      else if (parsed.length > 0) setActiveAgentId(parsed[0].id)
+      try {
+        const parsed = JSON.parse(savedAgents)
+        setAgents(parsed)
+        if (savedActiveId) setActiveAgentId(savedActiveId)
+        else if (parsed.length > 0) setActiveAgentId(parsed[0].id)
+      } catch (e) {
+        console.error('[RAIZEN] Failed to parse saved agents:', e)
+      }
     }
+    isInitialized.current = true
   }, [])
 
   useEffect(() => {
+    if (!isInitialized.current) return
     localStorage.setItem('raizen-agents', JSON.stringify(agents))
     if (activeAgentId) localStorage.setItem('raizen-active-agent-id', activeAgentId)
   }, [agents, activeAgentId])
@@ -2479,7 +2501,10 @@ export default function App() {
                 </SystemStatusMonitor>
                 <button 
                   className="header-action-btn"
-                  onClick={() => setIsModalOpen(true)}
+                  onClick={() => {
+                    setShowAddForm(false);
+                    setIsModalOpen(true);
+                  }}
                   aria-label="Neural Hub"
                   title="Neural Hub"
                 >

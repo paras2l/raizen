@@ -6,6 +6,10 @@ export interface ContextOptions {
   emotion: { state: string; prefix: string };
   activePlugins?: string[];
   userState?: any;
+  personaGreeting?: string;
+  protocolHints?: string[];
+  sovereignLevel?: 'LOCKED' | 'RESTRICTED' | 'UNBOUND';
+  isPatriarchPresent?: boolean;
 }
 
 export function buildEnrichedSystemPrompt(options: ContextOptions): string {
@@ -27,6 +31,14 @@ export function buildEnrichedSystemPrompt(options: ContextOptions): string {
 
   if (options.activePlugins && options.activePlugins.length > 0) {
     prompt += `\n\n[ACTIVE_PLUGINS]: ${options.activePlugins.join(', ')}`;
+  }
+
+  if (options.personaGreeting) {
+    prompt += `\n\n[PERSONA_GREETING_BASELINE]: ${options.personaGreeting}\n(Instruction: Use this tone/warmth as a baseline for your response. Mix it with your sovereign intelligence.)`;
+  }
+
+  if (options.protocolHints && options.protocolHints.length > 0) {
+    prompt += `\n\n[PROTOCOL_CAPABILITY_HINTS]:\n- ${options.protocolHints.join('\n- ')}`;
   }
 
   return prompt;

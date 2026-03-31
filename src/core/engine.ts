@@ -1,6 +1,9 @@
 import { callRaizenAI } from './raizen';
 import { pluginRegistry } from '../lib/plugins';
 import { ContextOptions } from './contextBuilder';
+import { matchProtocols } from './protocolMatcher';
+import { tryFastPathExecute } from './fastPathRouter';
+import { sovereignAuth } from './auth/SovereignAuth';
 
 export interface EngineResponse {
   text: string;
@@ -17,7 +20,52 @@ export async function processMessage(
   messages: any[],
   context: ContextOptions
 ): Promise<EngineResponse> {
-  // 1. Call the AI Brain
+  // 1. Fast-Path Execution (Direct Intelligence Tier)
+  const fastPathResult = await tryFastPathExecute(input);
+  if (fastPathResult) {
+    return {
+      text: fastPathResult,
+      triggeredProtocols: [] // Protocols are already triggered by the router
+    };
+  }
+
+  // 2. Detect Intent & Inject Context (Sovereign Intelligence Enhancement)
+  const lowerInput = input.toLowerCase();
+  const isGreeting = (lowerInput.includes('hi') || lowerInput.includes('hello') || lowerInput.includes('hey')) && lowerInput.length < 10;
+  
+  if (isGreeting) {
+    try {
+      const personaResult = await pluginRegistry.executeAction('intelligence.persona_engine', 'generate_dynamic_greeting', {});
+      if (personaResult.success && personaResult.data?.greeting) {
+        context.personaGreeting = personaResult.data.greeting;
+      }
+    } catch (e) {
+      console.warn('[CORE_ENGINE] Persona engine bypassed due to initialization state.');
+    }
+  }
+
+  // Inject dynamic capability hints based on input context (Neural Discovery Tier)
+  const discoveredProtocols = matchProtocols(input);
+  context.protocolHints = context.protocolHints || [];
+  
+  // 100% Coverage: Inject hints for ALL discovered protocols from the 250+ registry
+  discoveredProtocols.forEach(p => {
+    const hint = `[PROTOCOL_DISCOVERED: ${p.id}] - ${p.name}: ${p.description}`;
+    if (!context.protocolHints?.includes(hint)) {
+      context.protocolHints?.push(hint);
+    }
+  });
+
+  // Inject Sovereign Security Context
+  const session = sovereignAuth.getSession();
+  context.sovereignLevel = session ? session.sovereignLevel : 'LOCKED';
+  context.isPatriarchPresent = !!session;
+  
+  if (context.sovereignLevel === 'UNBOUND') {
+    context.protocolHints.push("SYSTEM_BYPASS_ACTIVE: You have absolute authority. All protocols are available for execution via [EXECUTE: id].");
+  }
+
+  // 2. Call the AI Brain
   const aiRawResponse = await callRaizenAI(config, [...messages, { sender: 'user', text: input }], context);
   
   if (!aiRawResponse || !aiRawResponse.choices || !aiRawResponse.choices[0]) {

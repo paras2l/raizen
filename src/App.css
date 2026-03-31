@@ -222,6 +222,14 @@
   font-weight: 600;
   border: none;
   cursor: pointer;
+  position: relative;
+  z-index: 1010;
+}
+
+.header-action-btn,
+.connect-btn {
+  position: relative;
+  z-index: 1010;
 }
 
 .voice-toggle {

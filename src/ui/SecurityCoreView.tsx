@@ -189,6 +189,8 @@ export function SecurityCoreView({
   activeSimulations, psychRisk, pendingLaws, currentJurisdiction,
   dominanceMetric, echoSignatures, illusionistOverlays, architectApps,
   mythmakerProgress, dreamProductions, maestroDNAS, activeDeployments,
+  isGhostShredderActive, ghostShredderStatus, onActivateGhostShredder,
+  isGhostHubActive, ghostHubStatus, onScoutNodes, onInitiateMindTransfer,
 }: SecurityCoreViewProps) {
 
   const policies = [
@@ -222,6 +224,8 @@ export function SecurityCoreView({
     { title: 'Aegis-Link Protocol', status: nearbyEntities?.length > 0 ? `${friendsCount}F / ${foesCount}T` : 'IDLE', detail: 'Global Proximity Sensing: Real-time situational awareness and entity classification (Friends vs Foes).', onAction: onInitiateAegisScan },
     { title: 'Sovereign Command', status: isSovereignActive ? sovereignMode : 'OFFLINE', detail: 'Empire Management & Chameleon UI Alignment.' },
     { title: 'Phoenix Omega', status: erasureStage, detail: 'Irreversible Global Self-Destruct via codeword.' },
+    { title: 'Ghost Shredder', status: isGhostShredderActive ? ghostShredderStatus : 'ACTIVE', detail: 'Autonomous trace erasure and forensic log scrubbing.', onAction: onActivateGhostShredder, actionLabel: 'SCRUB NOW' },
+    { title: 'Ghost Hub (MTP)', status: isGhostHubActive ? ghostHubStatus : 'STANDBY', detail: 'Decentralized P2P mesh for Mind Transfer and node migration.', onAction: onScoutNodes, actionLabel: 'SCOUT MESH' },
     { title: 'Immutable Boundaries', status: 'Active', detail: `Protecting: ${IMMUTABLE_BOUNDARY_PREFIXES.join(', ')}` },
   ]
 

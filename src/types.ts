@@ -368,6 +368,15 @@ export interface SecurityCoreViewProps {
   anchorPrivacyStatus?: string;
   onActivateAnchorPrivacy?: () => void | Promise<void>;
 
+  // Ghost Presence & Mind Transfer
+  isGhostShredderActive?: boolean;
+  ghostShredderStatus?: string;
+  onActivateGhostShredder?: () => void | Promise<void>;
+  isGhostHubActive?: boolean;
+  ghostHubStatus?: string;
+  onScoutNodes?: () => void | Promise<void>;
+  onInitiateMindTransfer?: (targetNodeId: string) => void | Promise<void>;
+
   onNeuralSatelliteBridge?: () => void | Promise<void>;
   onPredictCosmicEvents?: () => void | Promise<void>;
 

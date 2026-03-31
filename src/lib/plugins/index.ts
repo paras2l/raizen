@@ -66,6 +66,7 @@ import { mirageMesh } from './security/mirage-mesh/service';
 import { neuralFirewall } from './security/neural-firewall/service';
 import { atomicShredding } from './security/atomic-shredding/service';
 import { passportProtocol } from './system/passport/service';
+import { ghostHub } from '../ghost/GhostHub';
 import { phantomDrive } from './system/phantom/service';
 import { originKey } from './security/origin/service';
 import { voidProtocol } from './security/void/service';
@@ -336,6 +337,7 @@ export class PluginRegistry {
     this.register(echoPlugin);
     this.register(phoneControlPlugin);
     this.register(nexusLayer);
+    this.register(ghostHub as any);
 
     // Social & Architect Tier
     this.register(ghostWriter);

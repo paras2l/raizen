@@ -431,7 +431,7 @@ export function ChatView({
         chaosScore,
         overclockUrgency,
         emotion,
-        activePlugins: Array.from(pluginRegistry.getAll().map(p => p.id))
+        activePlugins: Array.from(pluginRegistry.getAll()).map(p => p?.id).filter(Boolean) as string[]
       };
 
       const result = await processMessage(text, config, messages, context);

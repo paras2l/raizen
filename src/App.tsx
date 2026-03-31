@@ -9,8 +9,14 @@ import {
 } from './lib/governance'
 import { SovereignBoot } from './components/SovereignBoot';
 import { BiometricEnrollment } from './components/BiometricEnrollment';
+import { SovereignSecurityView } from './ui/SovereignSecurityView';
+import { sovereignAuth } from './core/auth/SovereignAuth';
+import { AcousticSynapse } from './ui/AcousticSynapse';
+import { ghostShredder } from './core/agents/GhostShredder';
+import { ghostLinkEngine } from './core/network/GhostLinkEngine';
 import { pluginRegistry } from './lib/plugins';
 import { raizenMemory } from './lib/memory';
+import { ghostHub } from './lib/ghost/GhostHub';
 import { ghostEngine } from './lib/ghost/engine';
 import { discoveryService } from './lib/network/bonjour';
 import { systemDoctor } from './lib/diagnostics/doctor';
@@ -214,6 +220,17 @@ export default function App() {
   const [swarmCount, setSwarmCount] = useState(1);
 
   const [activeTab, setActiveTab] = useState<TabId>('chat')
+  const [isSovereignAuthenticated, setIsSovereignAuthenticated] = useState(false);
+  const [showSecurityBoot, setShowSecurityBoot] = useState(true);
+  const [isAcousticActive, setIsAcousticActive] = useState(true);
+
+  useEffect(() => {
+    const session = sovereignAuth.getSession();
+    if (session && session.sovereignLevel === 'UNBOUND') {
+      setIsSovereignAuthenticated(true);
+      setShowSecurityBoot(false);
+    }
+  }, []);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024)
   
@@ -1836,8 +1853,27 @@ export default function App() {
     return () => {
       window.removeEventListener('resize', handleResize);
       clearInterval(interval);
+      ghostShredder.stop();
     };
   }, [])
+
+  useEffect(() => {
+    if (isSovereignAuthenticated) {
+      ghostShredder.start();
+      console.log('[GHOST_ENGINE] Sub-Agent Swarm Initialized.');
+    }
+  }, [isSovereignAuthenticated]);
+
+  if (showSecurityBoot && !isSovereignAuthenticated) {
+    return (
+      <SovereignSecurityView 
+        onAuthenticated={() => {
+          setIsSovereignAuthenticated(true);
+          setShowSecurityBoot(false);
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="raizen-app-shell">
@@ -3365,6 +3401,22 @@ export default function App() {
                     await pluginRegistry.executeAction('spatial.mirage', 'mirage-ignite', {});
                     runSecurityCycle();
                   }}
+                  isGhostShredderActive={ghostShredder.getStatus().totalBytesWiped > 0}
+                  ghostShredderStatus={ghostShredder.getStatus().totalBytesWiped > 0 ? 'SHREDDING' : 'ACTIVE'}
+                  onActivateGhostShredder={async () => {
+                    await pluginRegistry.executeAction('network.ghost-node' as any, 'ghost-intrusion-erase', {});
+                    runSecurityCycle();
+                  }}
+                  isGhostHubActive={true}
+                  ghostHubStatus={`${ghostHub.getNodes().length} NODES`}
+                  onScoutNodes={async () => {
+                    ghostHub.scoutNodes();
+                    runSecurityCycle();
+                  }}
+                  onInitiateMindTransfer={async (targetNodeId) => {
+                    await ghostHub.initiateMindTransfer(targetNodeId);
+                    runSecurityCycle();
+                  }}
                   onNexusMeshEstablish={async () => {
                     await pluginRegistry.executeAction('network.nexus', 'nexus-mesh-establish', {});
                     runSecurityCycle();
@@ -4331,6 +4383,15 @@ export default function App() {
         id="ghost-conveyor" 
         ref={ghostContainerRef} 
         style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} 
+      />
+
+      {/* ── Acoustic Synapse (Ambient Presence) ── */}
+      <AcousticSynapse 
+        isActive={isAcousticActive} 
+        onTrigger={() => {
+          setIsSovereignAuthenticated(true);
+          setShowSecurityBoot(false);
+        }} 
       />
     </div>
   )

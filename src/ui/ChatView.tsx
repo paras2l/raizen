@@ -39,6 +39,8 @@ import { ChatViewProps, Message } from '../types'
 import { pluginRegistry } from '../lib/plugins'
 import { checkCodewordObedience } from '../lib/governance'
 import { raizenMemory } from '../lib/memory'
+import { processMessage } from '../core/engine'
+import { ContextOptions } from '../core/contextBuilder'
 
 export function ChatView({ 
   isMobile,
@@ -67,8 +69,13 @@ export function ChatView({
   setIsLearning,
   learningTopic,
   setLearningTopic,
-  chaosScore: initialChaos,
-  swarmCount: initialSwarm,
+  chaosScore,
+  setChaosScore,
+  overclockUrgency,
+  setOverclockUrgency,
+  emotion,
+  swarmCount,
+  setSwarmCount,
   proactiveSolutions,
   setProactiveSolutions,
   persona,
@@ -83,9 +90,6 @@ export function ChatView({
   const [isListening, setIsListening] = useState(false)
   const [isThinking, setIsThinking] = useState(false)
   const [isGhostMode, setIsGhostMode] = useState(!navigator.onLine)
-  const [chaosScore, setChaosScore] = useState(initialChaos)
-  const [swarmCount, setSwarmCount] = useState(initialSwarm)
-  const [overclockUrgency, setOverclockUrgency] = useState(0.1)
   const chatEndRef = useRef<HTMLDivElement>(null)
 
 
@@ -282,20 +286,27 @@ export function ChatView({
       timestamp: new Date() 
     }
 
+    // --- Immediate Feedback ---
+    setMessages(prev => [...prev, userMsg]);
+    setInputValue(''); // Clear input immediately
+    setIsThinking(true);
+
     if (isFirewallActive) {
       const psychRes = await pluginRegistry.executeAction('security.neural_firewall', 'analyze_message_intent', { text });
       if (psychRes.success && psychRes.data.riskLevel === 'CRITICAL') {
         const missionResult = `**🧠 NEURAL FIREWALL INTERCEPT**\n- **Status**: [BLOCKED]\n- **Intent**: [${psychRes.data.intentDetected}]\n- **Probability**: [${(psychRes.data.manipulationProbability * 100).toFixed(1)}%]\n\n*Raizen has detected psychological manipulation patterns in this message. Execution halted for Patriarch safety.*`;
-        setMessages(prev => [...prev, userMsg, {
+        setMessages(prev => [...prev, {
           id: `INTERCEPT-${Date.now()}`,
           text: missionResult,
           sender: 'raizen',
           timestamp: new Date(),
           isSovereign: true
         }]);
+        setIsThinking(false);
         return;
       }
     }
+
     let lowerInput = text.toLowerCase()
     let cleanInput = text.trim()
     
@@ -400,72 +411,54 @@ export function ChatView({
       }
     }
 
-    // --- AI Call Logic ---
-    setIsThinking(true)
+    // --- AI Call Logic (Central Core Engine) ---
+    const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN OS Core Intelligence. Absolute Sovereignty. Concise responses.`
     try {
-      // Temporary: Keeping legacy API call for now to ensure stability
-      // In next phase, this will use callRaizenAI from src/core/raizen.ts
-      
-      const messagesWithUser = [...messages, userMsg]
-      const RAIZEN_SYSTEM_PROMPT = `You are RAIZEN OS Core Intelligence. Absolute Sovereignty. Concise responses.`
-      
-      if (config) {
-        const endpoint = 'https://openrouter.ai/api/v1/chat/completions'
-        const headers = {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${config.apiKey}`,
-          'HTTP-Referer': 'https://raizen.os',
-          'X-Title': 'Raizen OS'
-        }
-        
-        const history = messagesWithUser.slice(-10).map(m => ({
-          role: m.sender === 'user' ? 'user' : 'assistant',
-          content: m.text
-        }))
-
-        const body = {
-          model: config.modelId,
-          messages: [
-            { role: 'system', content: RAIZEN_SYSTEM_PROMPT },
-            ...history
-          ]
-        }
-
-        const response = await fetch(endpoint, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify(body)
-        })
-
-        if (!response.ok) throw new Error(`Neural Link Status: ${response.status}`)
-        const data = await response.json()
-        const responseText = data.choices[0].message.content
-
-        const aiMsg: Message = { 
-          id: (Date.now() + 1).toString(), 
-          text: responseText, 
-          sender: 'assistant', 
-          timestamp: new Date() 
-        }
-        
-        const updatedMessages = [...messagesWithUser, aiMsg]
-        setMessages(updatedMessages)
-        setSessions(prev => {
-          const newMap = new Map(prev)
-          newMap.set(currentSessionId, updatedMessages)
-          return newMap
-        })
-
-        raizenMemory.add(cleanInput, { role: 'user', session: currentSessionId }).catch(() => {})
-        raizenMemory.add(responseText, { role: 'assistant', session: currentSessionId }).catch(() => {})
-
-        if (voiceMode) speak(aiMsg.text)
+      if (!config || !config.apiKey) {
+        throw new Error("Neural Hub Disconnected: Please configure an AI agent and API key in the Mission Center (Neural Hub).");
       }
+
+      const context: ContextOptions = {
+        chaosScore,
+        overclockUrgency,
+        emotion,
+        activePlugins: Array.from(pluginRegistry.getAll().map(p => p.id))
+      };
+
+      const result = await processMessage(text, config, messages, context);
+      
+      const aiMsg: Message = { 
+        id: (Date.now() + 1).toString(), 
+        text: result.text, 
+        sender: 'assistant', 
+        timestamp: new Date() 
+      }
+      
+      setMessages(prev => {
+        const updated = [...prev, aiMsg];
+        setSessions(s => {
+          const newMap = new Map(s);
+          newMap.set(currentSessionId, updated);
+          return newMap;
+        });
+        return updated;
+      });
+
+      raizenMemory.add(cleanInput, { role: 'user', session: currentSessionId }).catch(() => {})
+      raizenMemory.add(result.text, { role: 'assistant', session: currentSessionId }).catch(() => {})
+
+      if (voiceMode) speak(aiMsg.text)
     } catch (e: any) {
-      console.error('[NEURAL LINK ERROR]', e)
+      console.error('[CORE_ENGINE_FAILURE]', e)
+      setMessages(prev => [...prev, {
+        id: `ERR-${Date.now()}`,
+        text: `**⚠️ [CORE_ENGINE_FAILURE]**\n${e.message}`,
+        sender: 'raizen',
+        timestamp: new Date(),
+        isSovereign: true
+      }]);
     } finally {
       setIsThinking(false)
-      setInputValue('')
     }
   }
 

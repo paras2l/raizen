@@ -192,6 +192,12 @@ const SystemStatusMonitor = ({ children, isMobile }: { children: React.ReactNode
 };
 
 export default function App() {
+  // Real-time Core Metrics
+  const [chaosScore, setChaosScore] = useState(0.42);
+  const [overclockUrgency, setOverclockUrgency] = useState(0.15);
+  const [emotionState, setEmotionState] = useState({ state: 'STABLE', prefix: 'Optimal' });
+  const [swarmCount, setSwarmCount] = useState(1);
+
   const [activeTab, setActiveTab] = useState<TabId>('chat')
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024)
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 1024)
@@ -242,6 +248,7 @@ export default function App() {
   const [oracleSet, setOracleSet] = useState<any | null>(null)
   const [showOracleModal, setShowOracleModal] = useState(false)
   const [persona, setPersona] = useState<string>('ASSISTANT')
+
 
   // --- Singularity Core S+++ State ---
   const [runSingularityCycle, setRunSingularityCycle] = useState(0);
@@ -2550,8 +2557,13 @@ export default function App() {
                   setIsLearning={setIsLearning}
                   learningTopic={learningTopic}
                   setLearningTopic={setLearningTopic}
-                  chaosScore={0.12}
-                  swarmCount={2}
+                  chaosScore={chaosScore}
+                  setChaosScore={setChaosScore}
+                  overclockUrgency={overclockUrgency}
+                  setOverclockUrgency={setOverclockUrgency}
+                  emotion={emotionState}
+                  swarmCount={swarmCount}
+                  setSwarmCount={setSwarmCount}
                   proactiveSolutions={proactiveSolutions}
                   setProactiveSolutions={setProactiveSolutions}
                   persona={persona}

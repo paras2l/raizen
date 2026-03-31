@@ -73,7 +73,12 @@ export interface ChatViewProps {
   learningTopic: string | null
   setLearningTopic: React.Dispatch<React.SetStateAction<string | null>>
   chaosScore: number
+  setChaosScore: React.Dispatch<React.SetStateAction<number>>
+  overclockUrgency: number
+  setOverclockUrgency: React.Dispatch<React.SetStateAction<number>>
+  emotion: { state: string; prefix: string }
   swarmCount: number
+  setSwarmCount: React.Dispatch<React.SetStateAction<number>>
   proactiveSolutions: any[]
   setProactiveSolutions: React.Dispatch<React.SetStateAction<any[]>>
   persona: string

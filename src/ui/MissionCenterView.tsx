@@ -32,6 +32,16 @@ import { MissionCenterViewProps } from '../types'
 export function MissionCenterView({ isMobile, platform }: MissionCenterViewProps) {
   const plugins = pluginRegistry.getAll();
   
+  const handleExecute = (mission: any) => {
+    console.log(`[MISSION_CONTROL] Initiating protocol: ${mission.title}`);
+    // Extract plugin ID if it's a bridge mission
+    const pluginId = mission.id >= 100 ? plugins[mission.id - 100]?.id : null;
+    if (pluginId) {
+      pluginRegistry.executeAction(pluginId, 'run', {});
+    }
+  };
+
+  
   const getIcon = (pluginId: string) => {
     switch (pluginId) {
       case 'whatsapp': return <MessageCircle size={24} />;
@@ -112,6 +122,19 @@ export function MissionCenterView({ isMobile, platform }: MissionCenterViewProps
                   animate={{ width: `${m.progress}%` }}
                 />
               </div>
+              
+              <button 
+                className="execute-btn"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleExecute(m);
+                }}
+                aria-label={`Execute ${m.title}`}
+                title={`Execute ${m.title}`}
+              >
+                <Zap size={14} />
+                <span>Execute Protocol</span>
+              </button>
             </div>
           </motion.div>
         ))}

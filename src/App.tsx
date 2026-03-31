@@ -19,6 +19,7 @@ import {
   Box, 
   Cpu, 
   ChevronRight, 
+  ChevronDown,
   Plus,
   X,
   ShieldCheck,
@@ -133,6 +134,62 @@ const tabs: Tab[] = [
   { id: 'settings', label: 'System Config', icon: <Settings size={18} /> },
 ]
 
+
+// --- UI COMPONENTS ---
+
+const SystemStatusMonitor = ({ children, isMobile }: { children: React.ReactNode, isMobile: boolean }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const count = React.Children.count(children);
+  
+  return (
+    <div className={`system-status-monitor ${isOpen ? 'open' : ''} ${isMobile ? 'mobile' : ''}`}>
+      <button 
+        className="status-summary-trigger" 
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen ? "true" : "false"}
+      >
+        <div className="status-dot-group">
+          <Activity size={14} className="pulse" />
+          <span className="protocol-count">{count} PROTOCOLS</span>
+        </div>
+        <div className="status-meta">
+          <span className="status-label">SYSTEM_OMNIPRESENCE</span>
+          <ChevronDown size={12} className={`chevron-icon ${isOpen ? 'rotate' : ''}`} />
+        </div>
+      </button>
+
+      <AnimatePresence>
+        {isOpen && (
+          <>
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="status-monitor-backdrop"
+              onClick={() => setIsOpen(false)}
+            />
+            <motion.div 
+              initial={{ y: -20, opacity: 0, scale: 0.95 }}
+              animate={{ y: 0, opacity: 1, scale: 1 }}
+              exit={{ y: -20, opacity: 0, scale: 0.95 }}
+              className="status-monitor-panel"
+            >
+              <div className="panel-header">
+                <h3>VANGUARD_STATUS_MESH</h3>
+                <button onClick={() => setIsOpen(false)} title="Close Status Monitor"><X size={16} /></button>
+              </div>
+              <div className="status-grid-scroll">
+                <div className="status-grid-inner">
+                  {children}
+                </div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabId>('chat')
@@ -1828,7 +1885,7 @@ export default function App() {
                   <span className="battery-text">{batteryLevel}%</span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginRight: '1rem' }}>
+                <SystemStatusMonitor isMobile={isMobile}>
                   <div title="Mesh Connectivity" className="protocol-status-item" style={{ color: meshPeers > 0 ? 'var(--neon-blue)' : 'var(--neon-gold)' }}>
                     <Share2 size={14} className={meshPeers > 0 ? 'pulse' : ''} />
                     <span>MESH: {meshPeers > 0 ? `${meshPeers} PEERS` : 'SOLITARY'}</span>
@@ -2412,7 +2469,7 @@ export default function App() {
                     <RefreshCw size={14} className="pulse" />
                     <span>ELYSIUM: {recoveryReadiness.toUpperCase()}</span>
                   </div>
-                </div>
+                </SystemStatusMonitor>
                 <button 
                   className="header-action-btn"
                   onClick={() => setIsModalOpen(true)}

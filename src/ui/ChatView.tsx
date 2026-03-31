@@ -12,6 +12,8 @@ import {
   Brain,
   Shield,
   MessageCircle,
+  Mic,
+  MicOff,
   Send,
   Hash,
   Smartphone,
@@ -515,12 +517,20 @@ export function ChatView({
             placeholder={voiceMode ? "Listening for 'Raizen'..." : "Message Raizen..."} 
           />
           <button 
+            className={`voice-btn ${voiceMode ? 'active' : ''}`} 
+            onClick={() => setVoiceMode(!voiceMode)}
+            aria-label={voiceMode ? "Disable voice mode" : "Enable voice mode"}
+            title={voiceMode ? "Disable voice mode" : "Enable voice mode"}
+          >
+            {voiceMode ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
+          <button 
             className="send-btn" 
             onClick={() => handleSend()}
             aria-label="Send message"
             title="Send message"
           >
-            <MessageSquare size={18} />
+            <Send size={18} />
           </button>
         </div>
       </div>

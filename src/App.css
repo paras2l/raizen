@@ -267,6 +267,43 @@
   border-bottom-right-radius: 4px;
 }
 
+.active-tab {
+  background: var(--accent-primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb), 0.3);
+}
+
+.execute-btn {
+  margin-top: 1rem;
+  width: 100%;
+  padding: 0.6rem;
+  background: var(--bg-void);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.execute-btn:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(var(--accent-primary-rgb), 0.4);
+}
+
+.execute-btn:active {
+  transform: translateY(0);
+}
+
 .message-bubble.assistant {
   align-self: flex-start;
   background: var(--panel);
@@ -647,6 +684,167 @@
   -webkit-backdrop-filter: blur(25px) saturate(180%);
   backdrop-filter: blur(25px) saturate(180%);
   background: rgba(15, 23, 42, 0.7);
+}
+
+/* ── Platform Specifics ── */
+.platform-android .nav-item { min-height: 48px; }
+.platform-ios .viewport-header { padding-top: env(safe-area-inset-top); height: auto; min-height: 64px; }
+.platform-mac .raizen-app-shell { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif; }
+.platform-windows .raizen-app-shell { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+/* ── System Status Monitor ── */
+.system-status-monitor {
+  position: relative;
+  z-index: 1000;
+}
+
+.status-summary-trigger {
+  background: var(--panel-soft);
+  border: var(--glass-border);
+  border-radius: 100px;
+  padding: 0.5rem 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  color: var(--ink-main);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+
+.status-summary-trigger:hover {
+  background: white;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+}
+
+.status-dot-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  color: var(--accent-primary);
+}
+
+.status-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border-left: 1px solid var(--glass-border);
+  padding-left: 0.75rem;
+}
+
+.status-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  opacity: 0.4;
+  letter-spacing: 0.1em;
+}
+
+.chevron-icon {
+  transition: transform 0.3s ease;
+  opacity: 0.5;
+}
+
+.chevron-icon.rotate {
+  transform: rotate(180deg);
+}
+
+.status-monitor-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  z-index: 999;
+}
+
+.status-monitor-panel {
+  position: absolute;
+  top: calc(100% + 1rem);
+  right: 0;
+  width: 450px;
+  max-width: 90vw;
+  background: white;
+  border-radius: 24px;
+  border: var(--glass-border);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+  z-index: 1001;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.panel-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid var(--glass-border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-void);
+  color: white;
+}
+
+.panel-header h3 {
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  margin: 0;
+}
+
+.panel-header button {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.status-grid-scroll {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.status-grid-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+/* Re-styling the existing protocol-status-item for the grid */
+.status-grid-inner .protocol-status-item,
+.status-grid-inner .status-item,
+.status-grid-inner div[title] {
+  padding: 0.75rem;
+  background: var(--panel-soft);
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
+  display: flex !important; /* Force override */
+  align-items: center;
+  gap: 0.75rem !important;
+}
+
+.status-grid-inner .protocol-status-item:hover {
+  background: white;
+  border-color: var(--accent-primary);
+  transform: scale(1.02);
+}
+
+.status-grid-inner span {
+  font-size: 0.65rem !important;
+  font-weight: 600 !important;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Mac: Sleek, dense, and refined typography */

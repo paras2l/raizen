@@ -221,8 +221,12 @@ export default function App() {
   const [swarmCount, setSwarmCount] = useState(1);
 
   const [activeTab, setActiveTab] = useState<TabId>('chat')
-  const [isSovereignAuthenticated, setIsSovereignAuthenticated] = useState(false);
-  const [showSecurityBoot, setShowSecurityBoot] = useState(true);
+  const [isSovereignAuthenticated, setIsSovereignAuthenticated] = useState<boolean>(() => {
+    return localStorage.getItem('raizen_authenticated') === 'true'
+  });
+  const [showSecurityBoot, setShowSecurityBoot] = useState<boolean>(() => {
+    return localStorage.getItem('raizen_setup_complete') !== 'true'
+  });
   const [isAcousticActive, setIsAcousticActive] = useState(true);
 
   useEffect(() => {
@@ -230,6 +234,8 @@ export default function App() {
     if (session && session.sovereignLevel === 'UNBOUND') {
       setIsSovereignAuthenticated(true);
       setShowSecurityBoot(false);
+      localStorage.setItem('raizen_authenticated', 'true');
+      localStorage.setItem('raizen_setup_complete', 'true');
     }
   }, []);
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024)
@@ -1773,26 +1779,37 @@ export default function App() {
   }
 
   const handleConnect = () => {
-    if (!formName || !formKey) return
+    try {
+      if (!formName || !formKey) {
+        console.warn('[RAIZEN] Cannot register agent: Missing identity or secret.');
+        return;
+      }
 
-    const newAgent: AgentConfig = {
-      id: editingAgentId || `agent-${Date.now()}`,
-      name: formName,
-      modelId: formModel,
-      apiKey: formKey,
-      provider: formProvider
+      const newAgent: AgentConfig = {
+        id: editingAgentId || `agent-${Date.now()}`,
+        name: formName,
+        modelId: formModel || 'meta/llama-3',
+        apiKey: formKey,
+        provider: formProvider || 'NVIDIA'
+      }
+
+      if (editingAgentId) {
+        setAgents(prev => prev.map(a => a.id === editingAgentId ? newAgent : a))
+      } else {
+        setAgents(prev => [...prev, newAgent])
+        if (!activeAgentId) setActiveAgentId(newAgent.id)
+      }
+
+      // Safe state transition
+      setTimeout(() => {
+        resetForm()
+        setShowAddForm(false)
+        setEditingAgentId(null)
+      }, 0)
+    } catch (err) {
+      console.error('[RAIZEN] Critical failure during agent integration:', err);
+      setSecurityError('Neural link synthesis failed. System reverted to stable state.');
     }
-
-    if (editingAgentId) {
-      setAgents(prev => prev.map(a => a.id === editingAgentId ? newAgent : a))
-    } else {
-      setAgents(prev => [...prev, newAgent])
-      if (!activeAgentId) setActiveAgentId(newAgent.id)
-    }
-
-    resetForm()
-    setShowAddForm(false)
-    setEditingAgentId(null)
   }
 
   const resetForm = () => {
@@ -1871,6 +1888,8 @@ export default function App() {
         onAuthenticated={() => {
           setIsSovereignAuthenticated(true);
           setShowSecurityBoot(false);
+          localStorage.setItem('raizen_authenticated', 'true');
+          localStorage.setItem('raizen_setup_complete', 'true');
         }} 
       />
     );

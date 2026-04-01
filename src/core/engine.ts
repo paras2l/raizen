@@ -29,32 +29,38 @@ export async function processMessage(
     };
   }
 
-  // 2. Detect Intent & Inject Context (Sovereign Intelligence Enhancement)
-  const lowerInput = input.toLowerCase();
-  const isGreeting = (lowerInput.includes('hi') || lowerInput.includes('hello') || lowerInput.includes('hey')) && lowerInput.length < 10;
+  // Detect Intent & Inject Context (Sovereign Intelligence Enhancement)
+  const lowerInput = input.toLowerCase().trim();
+  const isGreeting = (lowerInput === 'hi' || lowerInput === 'hello' || lowerInput === 'hey') || lowerInput.length < 5;
   
   if (isGreeting) {
     try {
-      const personaResult = await pluginRegistry.executeAction('intelligence.persona_engine', 'generate_dynamic_greeting', {});
+      const personaResult = await pluginRegistry.executeAction('intelligence.persona_engine', 'generate_dynamic_greeting', { input });
       if (personaResult.success && personaResult.data?.greeting) {
-        context.personaGreeting = personaResult.data.greeting;
+         return {
+           text: personaResult.data.greeting,
+           triggeredProtocols: []
+         };
       }
     } catch (e) {
       console.warn('[CORE_ENGINE] Persona engine bypassed due to initialization state.');
     }
+    // Fallback if persona engine is not ready: Let the main AI handle it, but still skip protocols
+    context.protocolHints = []; 
+  } else {
+    // Inject dynamic capability hints based on input context (Neural Discovery Tier)
+    const discoveredProtocols = matchProtocols(input);
+    context.protocolHints = context.protocolHints || [];
+    
+    // 100% Coverage: Inject hints for ALL discovered protocols from the 250+ registry
+    discoveredProtocols.forEach(p => {
+      if (!p || !p.id) return;
+      const hint = `[PROTOCOL_DISCOVERED: ${p.id}] - ${p.name}: ${p.description}`;
+      if (!context.protocolHints?.includes(hint)) {
+        context.protocolHints?.push(hint);
+      }
+    });
   }
-
-  // Inject dynamic capability hints based on input context (Neural Discovery Tier)
-  const discoveredProtocols = matchProtocols(input);
-  context.protocolHints = context.protocolHints || [];
-  
-  // 100% Coverage: Inject hints for ALL discovered protocols from the 250+ registry
-  discoveredProtocols.forEach(p => {
-    const hint = `[PROTOCOL_DISCOVERED: ${p.id}] - ${p.name}: ${p.description}`;
-    if (!context.protocolHints?.includes(hint)) {
-      context.protocolHints?.push(hint);
-    }
-  });
 
   // Inject Sovereign Security Context
   const session = sovereignAuth.getSession();

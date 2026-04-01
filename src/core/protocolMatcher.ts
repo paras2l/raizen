@@ -17,10 +17,11 @@ export function matchProtocols(input: string): ProtocolMatch[] {
   const matches: ProtocolMatch[] = [];
 
   for (const plugin of allPlugins) {
+    if (!plugin || !plugin.id) continue;
     let score = 0;
     const pid = plugin.id.toLowerCase();
-    const pname = plugin.name.toLowerCase();
-    const pdesc = plugin.description.toLowerCase();
+    const pname = (plugin.name || '').toLowerCase();
+    const pdesc = (plugin.description || '').toLowerCase();
 
     // Direct matches
     if (lowerInput.includes(pid)) score += 0.8;
@@ -35,18 +36,19 @@ export function matchProtocols(input: string): ProtocolMatch[] {
     // Action matches
     if (plugin.actions) {
         plugin.actions.forEach(action => {
+            if (!action || !action.label) return;
             const alabel = action.label.toLowerCase();
-            const adesc = action.description.toLowerCase();
+            const adesc = (action.description || '').toLowerCase();
             if (lowerInput.includes(alabel)) score += 0.4;
-            if (lowerInput.includes(adesc)) score += 0.2;
+            if (adesc && lowerInput.includes(adesc)) score += 0.2;
         });
     }
 
     if (score > 0.2) {
       matches.push({
         id: plugin.id,
-        name: plugin.name,
-        description: plugin.description,
+        name: plugin.name || plugin.id,
+        description: plugin.description || '',
         relevance: Math.min(score, 1.0)
       });
     }

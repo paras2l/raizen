@@ -435,7 +435,6 @@ export class PluginRegistry {
     this.register(vanguardDrone);
     this.register(helaProtocol);
     this.register(rootProtocol);
-    this.register(aegisLink);
     this.register(lensProtocol);
     this.register(zoneProtocol);
     this.register(sentinelArray);
@@ -448,7 +447,6 @@ export class PluginRegistry {
     this.register(teslaLayer);
     this.register(gaiaProtocol);
     this.register(gaiaXProtocol);
-    this.register(centurionProtocol);
     
     // Cosmic Tier
     this.register(pioneerScan);
@@ -465,45 +463,16 @@ export class PluginRegistry {
     this.register(irisScan);
     this.register(serenityProtocol);
     this.register(elysiumProtocol);
-    this.register(singularityCore);
-    this.register(rccrBrain);
+    
+    // Core & Extended
     this.register(perceptionEngine);
     this.register(ghostMesh);
     this.register(hudRenderer);
     this.register(ascensionCommandEngine);
     this.register(aetherLinkPlugin);
-    this.register(homeAssistant);
-    this.register(digitizerProtocol);
-    this.register(predictiveIntel);
-    this.register(nervanaShield);
-    this.register(pioneerScan);
-    this.register(bardProtocol);
-    this.register(codeSmithProtocol);
-    this.register(directorProtocol);
-    this.register(dreamReelProtocol);
-    this.register(duetProtocol);
-    this.register(echoProtocol);
-    this.register(illusionistLayer);
-    this.register(maestroEngine);
-    this.register(mirageEngine);
-    this.register(mythmakerEngine);
-    this.register(physicaEngine);
-    this.register(spatialHooks);
-    this.register(teslaProtocol);
-    this.register(lifeLineProtocol);
-    this.register(ghostNodeProtocol);
-    this.register(gridProtocol);
-    this.register(nexusProtocol);
-    this.register(searchPlugin);
-    this.register(systemFlux);
-    this.register(mitosisUI);
-    this.register(spatialHudPlugin);
-    this.register(sustainProtocol);
     this.register(liveCanvasPlugin);
     this.register(openProsePlugin);
     this.register(openCodePlugin);
-    
-    // Extended Protocols
     this.register(new UnityP2PPlugin());
     this.register(proSearchPlugin);
     this.register(xrHooks);
@@ -525,11 +494,16 @@ export class PluginRegistry {
     this.register(anchorPrivacyPlugin);
   }
 
-  private register(plugin: RaizenPlugin) {
+  private register(plugin: RaizenPlugin | undefined) {
+    if (!plugin || !plugin.id) {
+       console.warn('[REGISTRY] Attempted to register invalid plugin:', plugin);
+       return;
+    }
     this.plugins.set(plugin.id, plugin);
   }
 
   getPlugin(id: string): RaizenPlugin | undefined {
+    if (!id) return undefined;
     return this.plugins.get(id);
   }
 

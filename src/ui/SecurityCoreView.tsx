@@ -243,8 +243,30 @@ export function SecurityCoreView({
             </div>
             <div className="card-body">
               {p.title === 'Ghost Hub (MTP)' && masterPeerId && (
-                <div style={{ marginBottom: '10px', color: '#00f2fe', fontFamily: 'monospace', fontSize: '0.9rem' }}>
-                  PEER_ID: {masterPeerId}
+                <div style={{ marginBottom: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ color: '#00f2fe', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                    PEER_ID: {masterPeerId}
+                  </div>
+                  <input 
+                    type="text" 
+                    placeholder="Enter Render URL (Ghost Husk)..." 
+                    style={{ 
+                      width: '100%', 
+                      padding: '8px', 
+                      borderRadius: '8px', 
+                      background: 'rgba(0,0,0,0.3)', 
+                      border: '1px solid rgba(0,242,254,0.3)', 
+                      color: 'white',
+                      fontSize: '0.8rem'
+                    }} 
+                  />
+                  <button 
+                    className="card-action-btn"
+                    style={{ width: '100%', background: 'linear-gradient(90deg, #00f2fe 0%, #4facfe 100%)', color: 'black' }}
+                    onClick={() => alert('Ghost Husk Stashed. Universal Bridge Ready.')}
+                  >
+                    STASH HUSK
+                  </button>
                 </div>
               )}
               <p>{p.detail}</p>

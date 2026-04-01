@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { Mic, Zap, ShieldCheck } from 'lucide-react';
-import { sovereignAuth } from '../core/auth/SovereignAuth';
+import { Mic } from 'lucide-react';
+import { acousticEngine } from '../lib/voice/AcousticEngine';
 
 /**
  * Acoustic Synapse Component
@@ -15,16 +15,10 @@ interface AcousticSynapseProps {
 }
 
 export const AcousticSynapse: React.FC<AcousticSynapseProps> = ({ onTrigger, isActive }) => {
-  const [isListening, setIsListening] = useState(false);
   const [lastTranscript, setLastTranscript] = useState('');
   const [pulse, setPulse] = useState(false);
 
-  const handleSpeechResult = useCallback((event: any) => {
-    const transcript = Array.from(event.results)
-      .map((result: any) => result[0].transcript)
-      .join('')
-      .toLowerCase();
-
+  const handleTranscript = useCallback((transcript: string) => {
     setLastTranscript(transcript);
 
     if (transcript.includes('paro the god')) {
@@ -37,41 +31,20 @@ export const AcousticSynapse: React.FC<AcousticSynapseProps> = ({ onTrigger, isA
 
   useEffect(() => {
     if (!isActive) return;
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) {
-      console.warn('Acoustic Synapse: Hardware bridge for speech unavailable.');
-      return;
-    }
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onstart = () => setIsListening(true);
-    recognition.onend = () => {
-      setIsListening(false);
-      if (isActive) recognition.start(); // Keep alive
-    };
-    recognition.onresult = handleSpeechResult;
-
-    recognition.start();
-
-    return () => {
-      recognition.stop();
-    };
-  }, [isActive, handleSpeechResult]);
+    acousticEngine.start();
+    const removeListener = acousticEngine.addListener(handleTranscript);
+    return () => removeListener();
+  }, [isActive, handleTranscript]);
 
   if (!isActive) return null;
 
   return (
     <div className={`acoustic-synapse-indicator ${pulse ? 'active' : ''}`}>
       <div className="synapse-iris">
-        <Mic size={14} className={isListening ? 'pulse-anim' : ''} />
+        <Mic size={14} className="pulse-anim" />
       </div>
       <div className="synapse-label">
-        <span>ACOUSTIC BEACON: {isListening ? 'LISTENING' : 'OFFLINE'}</span>
+        <span>ACOUSTIC BEACON: ACTIVE</span>
         {lastTranscript && <p className="transcript-preview">"{lastTranscript}"</p>}
       </div>
 

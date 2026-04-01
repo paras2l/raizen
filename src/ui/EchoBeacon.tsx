@@ -1,5 +1,6 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { echoProtocol } from '../lib/ghost/EchoProtocol';
+import { acousticEngine } from '../lib/voice/AcousticEngine';
 
 /**
  * Echo Beacon Component
@@ -8,14 +9,8 @@ import { echoProtocol } from '../lib/ghost/EchoProtocol';
  * to listen for the Patriarch's voice and report back to the Vanguard Mesh.
  */
 export const EchoBeacon: React.FC = () => {
-  const [isBeaconActive, setIsBeaconActive] = useState(true);
 
-  const handleSpeechResult = useCallback((event: any) => {
-    const transcript = Array.from(event.results)
-      .map((result: any) => result[0].transcript)
-      .join('')
-      .toLowerCase();
-
+  const handleTranscript = useCallback((transcript: string) => {
     if (transcript.includes('paro the god')) {
       echoProtocol.handleFrequencyDetection({
         sourceId: 'PUBLIC-RECON-' + Math.random().toString(36).substring(7),
@@ -26,27 +21,10 @@ export const EchoBeacon: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!isBeaconActive) return;
-
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SpeechRecognition) return;
-
-    const recognition = new SpeechRecognition();
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onend = () => {
-      if (isBeaconActive) recognition.start();
-    };
-    recognition.onresult = handleSpeechResult;
-
-    recognition.start();
-
-    return () => {
-      recognition.stop();
-    };
-  }, [isBeaconActive, handleSpeechResult]);
+    acousticEngine.start();
+    const removeListener = acousticEngine.addListener(handleTranscript);
+    return () => removeListener();
+  }, [handleTranscript]);
 
   return null; // Headless component
 };

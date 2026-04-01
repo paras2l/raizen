@@ -52,18 +52,19 @@ export class NeuralFirewallService implements RaizenPlugin {
     });
 
     try {
+      const auditId = auditEntry?.id || `FIREWALL-${Date.now()}`;
       switch (actionId) {
         case 'analyze_message_intent':
-          return await this.handleIntentAnalysis(params, auditEntry.id);
+          return await this.handleIntentAnalysis(params, auditId);
         case 'get_psych_report':
-          return this.handleReport(auditEntry.id);
+          return this.handleReport(auditId);
         case 'update_neural_filter':
-          return await this.handleUpdate(auditEntry.id);
+          return await this.handleUpdate(auditId);
         default:
-          return { success: false, error: 'Psychological link severed.', auditId: auditEntry.id };
+          return { success: false, error: 'Psychological link severed.', auditId: auditId };
       }
     } catch (e: any) {
-      return { success: false, error: e.message, auditId: auditEntry.id };
+      return { success: false, error: e.message, auditId: auditEntry?.id || 'ERR' };
     }
   }
 

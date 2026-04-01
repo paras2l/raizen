@@ -96,16 +96,17 @@ export class PredictiveIntelligenceService implements RaizenPlugin {
     });
 
     try {
+      const auditId = auditEntry?.id || `ORACLE-${Date.now()}`;
       switch (actionId) {
         case 'trigger_manual_scan':
           await this.runAnticipatoryCycle();
-          return { success: true, data: { status: 'Oracle Scan Complete', predictionsFound: this.cache.getAll().length }, auditId: auditEntry.id };
+          return { success: true, data: { status: 'Oracle Scan Complete', predictionsFound: this.cache.getAll().length }, auditId: auditId };
         case 'get_cached_predictions':
-          return { success: true, data: { prepared: this.cache.getAll(), logs: predictiveLogger.getHistory() }, auditId: auditEntry.id };
+          return { success: true, data: { prepared: this.cache.getAll(), logs: predictiveLogger.getHistory() }, auditId: auditId };
         case 'execute_oracle_solution':
           const solutionId = params.solutionId;
           predictiveLogger.log({ event: 'ARBITER_GATE', details: `Executing solution: ${solutionId}` });
-          return { success: true, data: { status: 'Execution Finalized', solutionId }, auditId: auditEntry.id };
+          return { success: true, data: { status: 'Execution Finalized', solutionId }, auditId: auditId };
         case 'precompute_solutions':
           const input = params.input || '';
           const clusters = this.aggregator.aggregate([{
@@ -123,21 +124,21 @@ export class PredictiveIntelligenceService implements RaizenPlugin {
               need.oracleSet.reason = evalRes.reason;
               need.oracleSet.persona = evalRes.persona;
             }
-            return { success: true, data: { oracleSet: need.oracleSet }, auditId: auditEntry.id };
+            return { success: true, data: { oracleSet: need.oracleSet }, auditId: auditId };
           }
-          return { success: false, error: 'Could not compute solutions for input.', auditId: auditEntry.id };
+          return { success: false, error: 'Could not compute solutions for input.', auditId: auditId };
         case 'get_active_solutions':
           const active = this.cache.getAll();
-          return { success: true, data: { solutions: active }, auditId: auditEntry.id };
+          return { success: true, data: { solutions: active }, auditId: auditId };
         case 'clear_prediction_cache':
           this.cache.clear();
           predictiveLogger.log({ event: 'PURGE', details: 'Manual cache flush.' });
-          return { success: true, data: { status: 'Cache Cleared' }, auditId: auditEntry.id };
+          return { success: true, data: { status: 'Cache Cleared' }, auditId: auditId };
         default:
-          return { success: false, error: 'Unknown action.', auditId: auditEntry.id };
+          return { success: false, error: 'Unknown action.', auditId: auditId };
       }
     } catch (e: any) {
-      return { success: false, error: e.message, auditId: auditEntry.id };
+      return { success: false, error: e.message, auditId: auditEntry?.id || 'ERR' };
     }
   }
 

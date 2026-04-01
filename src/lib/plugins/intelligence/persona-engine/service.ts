@@ -80,22 +80,23 @@ export class PersonaEngineService implements RaizenPlugin {
     });
 
     try {
+        const auditId = auditEntry?.id || `SURROGATE-${Date.now()}`;
         switch (actionId) {
           case 'generate_greeting':
-            return this.handleGreeting(params, auditEntry.id);
+            return this.handleGreeting(params, auditId);
           case 'analyze_mood':
-            return this.handleMoodAnalysis(params, auditEntry.id);
+            return this.handleMoodAnalysis(params, auditId);
           case 'get_persona_status':
-            return this.handleStatus(auditEntry.id);
+            return this.handleStatus(auditId);
           case 'set_mood_alignment':
-            return this.handleMoodAlignment(params, auditEntry.id);
+            return this.handleMoodAlignment(params, auditId);
       
           case 'p2p_memory_sync':
             console.log('[PERSONA] INITIATING NEXUS P2P MEMORY SYNC...');
             return { 
               success: true, 
               data: { status: 'NODES_SYNCHRONIZED', peers: 12, cloudReliance: 0 }, 
-              auditId: auditEntry.id 
+              auditId: auditId 
             };
 
           case 'generate_dynamic_greeting': {
@@ -103,14 +104,14 @@ export class PersonaEngineService implements RaizenPlugin {
               timeOfDay: 'evening', 
               recentAchievement: 'Raizen Singularity Finalization' 
             }, { current: 'proud', confidence: 1.0, intensity: 0.8 });
-            return { success: true, data: { greeting, tone: 'WARM_PARTNER', resonance: 1.0 }, auditId: auditEntry.id };
+            return { success: true, data: { greeting, tone: 'WARM_PARTNER', resonance: 1.0 }, auditId: auditId };
           }
 
           default:
-            return { success: false, error: 'Persona boundary violation.', auditId: auditEntry.id };
+            return { success: false, error: 'Persona boundary violation.', auditId: auditId };
         }
     } catch (e: any) {
-      return { success: false, error: e.message, auditId: auditEntry.id };
+      return { success: false, error: e.message, auditId: auditEntry?.id || 'ERR' };
     }
   }
 

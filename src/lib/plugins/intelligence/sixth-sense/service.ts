@@ -72,20 +72,21 @@ export class SixthSenseService implements RaizenPlugin {
     });
 
     try {
+      const auditId = auditEntry?.id || `SIXTH-SENSE-${Date.now()}`;
       switch (actionId) {
         case 'get_ambient_pulse':
-          return await this.handlePulse(auditEntry.id);
+          return await this.handlePulse(auditId);
         case 'calibrate_sensors':
-          return await this.handleCalibration(auditEntry.id);
+          return await this.handleCalibration(auditId);
         case 'trigger_alert_buffer':
-          return await this.handleAlertOverride(params, auditEntry.id);
+          return await this.handleAlertOverride(params, auditId);
         case 'adjust_priority':
-           return this.handlePriorityCheck(params, auditEntry.id);
+           return this.handlePriorityCheck(params, auditId);
         default:
-          return { success: false, error: 'Sensory blackout.', auditId: auditEntry.id };
+          return { success: false, error: 'Sensory blackout.', auditId: auditId };
       }
     } catch (e: any) {
-      return { success: false, error: e.message, auditId: auditEntry.id };
+      return { success: false, error: e.message, auditId: auditEntry?.id || 'ERR' };
     }
   }
 

@@ -114,14 +114,17 @@ class AuditLedger {
     };
 
     const { data, error } = await supabase.from('audit_logs').insert([entry]).select();
+    const surrogateId = `LOCAL-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
     if (error) {
       console.error(`[GOVERNANCE] Audit backup failed: ${type}`, error);
       // Failover to local console for absolute visibility
       console.warn(`[FAILOVER] Audit: ${type}`, payload);
+      return { ...entry, id: surrogateId };
     }
     
     console.log(`[GOVERNANCE] Audit entry appended: ${type}`, entry);
-    return data?.[0];
+    return data?.[0] || { ...entry, id: surrogateId };
   }
 }
 

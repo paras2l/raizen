@@ -376,6 +376,7 @@ export interface SecurityCoreViewProps {
   ghostHubStatus?: string;
   onScoutNodes?: () => void | Promise<void>;
   onInitiateMindTransfer?: (targetNodeId: string) => void | Promise<void>;
+  masterPeerId?: string;
 
   onNeuralSatelliteBridge?: () => void | Promise<void>;
   onPredictCosmicEvents?: () => void | Promise<void>;

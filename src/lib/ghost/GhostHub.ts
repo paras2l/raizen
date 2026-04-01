@@ -21,6 +21,7 @@ class GhostHub {
   private static instance: GhostHub;
   private nodes: Map<string, GhostNode> = new Map();
   private isTransferring = false;
+  private masterPeerId = 'RAIZEN-' + Math.random().toString(36).substring(2, 10).toUpperCase();
 
   private constructor() {
     this.initializeVanguard();
@@ -99,6 +100,10 @@ class GhostHub {
 
   public getNodes(): GhostNode[] {
     return Array.from(this.nodes.values());
+  }
+
+  public getMasterPeerId(): string {
+    return this.masterPeerId;
   }
 }
 

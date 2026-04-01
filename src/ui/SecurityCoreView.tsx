@@ -191,6 +191,7 @@ export function SecurityCoreView({
   mythmakerProgress, dreamProductions, maestroDNAS, activeDeployments,
   isGhostShredderActive, ghostShredderStatus, onActivateGhostShredder,
   isGhostHubActive, ghostHubStatus, onScoutNodes, onInitiateMindTransfer,
+  masterPeerId,
 }: SecurityCoreViewProps) {
 
   const policies = [
@@ -226,6 +227,7 @@ export function SecurityCoreView({
     { title: 'Phoenix Omega', status: erasureStage, detail: 'Irreversible Global Self-Destruct via codeword.' },
     { title: 'Ghost Shredder', status: isGhostShredderActive ? ghostShredderStatus : 'ACTIVE', detail: 'Autonomous trace erasure and forensic log scrubbing.', onAction: onActivateGhostShredder, actionLabel: 'SCRUB NOW' },
     { title: 'Ghost Hub (MTP)', status: isGhostHubActive ? ghostHubStatus : 'STANDBY', detail: 'Decentralized P2P mesh for Mind Transfer and node migration.', onAction: onScoutNodes, actionLabel: 'SCOUT MESH' },
+    { title: 'Echo Protocol', status: 'UNIVERSAL', detail: 'Global Acoustic Bridge: Initiate autonomous device connection via voice frequency detection (paro the god).' },
     { title: 'Immutable Boundaries', status: 'Active', detail: `Protecting: ${IMMUTABLE_BOUNDARY_PREFIXES.join(', ')}` },
   ]
 
@@ -240,6 +242,11 @@ export function SecurityCoreView({
               <span className="badge active">{p.status}</span>
             </div>
             <div className="card-body">
+              {p.title === 'Ghost Hub (MTP)' && masterPeerId && (
+                <div style={{ marginBottom: '10px', color: '#00f2fe', fontFamily: 'monospace', fontSize: '0.9rem' }}>
+                  PEER_ID: {masterPeerId}
+                </div>
+              )}
               <p>{p.detail}</p>
               {(p as any).onAction && (
                 <button 

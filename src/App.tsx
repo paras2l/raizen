@@ -11,6 +11,7 @@ import { SovereignBoot } from './components/SovereignBoot';
 import { BiometricEnrollment } from './components/BiometricEnrollment';
 import { SovereignSecurityView } from './ui/SovereignSecurityView';
 import { sovereignAuth } from './core/auth/SovereignAuth';
+import { EchoBeacon } from './ui/EchoBeacon';
 import { AcousticSynapse } from './ui/AcousticSynapse';
 import { ghostShredder } from './core/agents/GhostShredder';
 import { ghostLinkEngine } from './core/network/GhostLinkEngine';
@@ -3417,6 +3418,7 @@ export default function App() {
                     await ghostHub.initiateMindTransfer(targetNodeId);
                     runSecurityCycle();
                   }}
+                  masterPeerId={ghostHub.getMasterPeerId()}
                   onNexusMeshEstablish={async () => {
                     await pluginRegistry.executeAction('network.nexus', 'nexus-mesh-establish', {});
                     runSecurityCycle();
@@ -4384,6 +4386,8 @@ export default function App() {
         ref={ghostContainerRef} 
         style={{ position: 'absolute', width: 0, height: 0, overflow: 'hidden', pointerEvents: 'none' }} 
       />
+
+      <EchoBeacon />
 
       {/* ── Acoustic Synapse (Ambient Presence) ── */}
       <AcousticSynapse 
